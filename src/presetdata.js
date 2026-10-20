@@ -1,0 +1,35 @@
+/* ===================== presetgegevens van de Renault 5 E-Tech ===================== */
+const appCar = AUTO.wortel;
+const appCats = ['Overzicht', 'Motor', 'Aandrijving', 'Onderstel', 'Carrosserie', 'Interieur', 'Openen'];
+const PRESETS = [
+  { id: 'assembled', cat: 'Overzicht', label: 'Gemonteerd', key: '0', note: 'De hele auto, Pop-geel, alles dicht.', cam: { dir: [1, 0.42, 1.05], pad: 1.08 } },
+  { id: 'main', cat: 'Overzicht', label: 'Hoofdgroepen', key: '1', note: 'De acht hoofdgroepen uit elkaar.', open: [appCar], labels: appCar, cam: { dir: [1, 0.5, 1.05], pad: 1.06 } },
+  { id: 'bodyOff', cat: 'Overzicht', label: 'Carrosserie eraf', note: 'Carrosserie en interieur opgetild, zodat motor, batterij en onderstel vrij liggen.', pull: { 'Carrosserie': [0, 1.3, 0], 'Interieur': [0, 0.45, 0] }, labels: appCar, cam: { dir: [1, 0.35, 0.85], pad: 1.05 } },
+  { id: 'xray', cat: 'Overzicht', label: 'Röntgen', key: '8', note: 'Carrosserie doorzichtig, de techniek blijft op zijn plek.', xray: true, cam: { dir: [1, 0.15, 0.05], pad: 1.04 } },
+  { id: 'everything', cat: 'Overzicht', label: 'Alles uit elkaar', key: '9', note: 'Elke groep uitgeklapt, gekleurd per hoofdgroep.', deep: [appCar], sys: true, labels: appCar, cam: { dir: [1, 0.55, 1], pad: 1.02 } },
+  { id: 'tour', cat: 'Overzicht', label: 'Rondleiding', note: 'De belangrijkste standen achter elkaar.', tour: true },
+  { id: 'motor', cat: 'Motor', label: 'Motor 6AK', key: '2', note: 'Fremderregte synchroonmotor, 110 kW, eerste laag open.', iso: ['Motor 6AK'], open: ['Motor 6AK'], cam: { dir: [0.4, 0.45, 1], pad: 1.1 } },
+  { id: 'motorDeep', cat: 'Motor', label: 'Motor open', note: 'Stator, rotor en resolver uit het huis.', iso: ['Motor 6AK'], deep: ['Motor 6AK'], cam: { dir: [0.35, 0.5, 1], pad: 1.04 } },
+  { id: 'inverter', cat: 'Motor', label: 'Omvormer', note: 'Omvormer bovenop de motor.', iso: ['Omvormer'], open: ['Omvormer'], cam: { dir: [0.5, 0.7, 1], pad: 1.08 } },
+  { id: 'reducer', cat: 'Aandrijving', label: 'Reductiebak', key: '4', note: 'Vaste reductie en differentieel.', iso: ['Reductiebak'], open: ['Reductiebak'], cam: { dir: [0.6, 0.45, 1], pad: 1.08 } },
+  { id: 'shafts', cat: 'Aandrijving', label: 'Aandrijfassen', note: 'Twee aandrijfassen naar de voorwielen.', iso: ['Aandrijfassen'], open: ['Aandrijfassen'], cam: { dir: [0.2, 0.9, 0.8], pad: 1.05 } },
+  { id: 'battery', cat: 'Motor', label: 'Tractiebatterij', note: '52 kWh onder de vloer.', iso: ['Tractiebatterij'], open: ['Tractiebatterij'], cam: { dir: [0.8, 0.35, 0.7], pad: 1.06 } },
+  { id: 'cooling', cat: 'Motor', label: 'Koeling', note: 'Radiateur, ventilator en warmtepomp.', iso: ['Koeling en luchtinlaat'], open: ['Koeling en luchtinlaat'], cam: { dir: [0.7, 0.4, 1], pad: 1.06 } },
+  { id: 'charge', cat: 'Motor', label: 'Laden', note: 'Laadaansluiting, boordlader en kabel naar de batterij.', iso: ['Brandstofsysteem'], open: ['Brandstofsysteem'], cam: { dir: [0.7, 0.55, 1], pad: 1.05 } },
+  { id: 'chassis', cat: 'Onderstel', label: 'Onderstel', key: '5', note: 'Vooras, achteras, wielen en remmen.', iso: ['Onderstel'], open: ['Onderstel', 'Vooras en stuurinrichting', 'Achteras'], cam: { dir: [1, 0.45, 1], pad: 1.05 } },
+  { id: 'frontAxle', cat: 'Onderstel', label: 'Vooras', note: 'McPherson-veerpoten en elektrische tandheugel.', iso: ['Vooras en stuurinrichting'], open: ['Vooras en stuurinrichting'], cam: { dir: [0.7, 0.5, 1], pad: 1.05 } },
+  { id: 'wheelLF', cat: 'Onderstel', label: 'Wiel linksvoor', note: 'Wiel met band 195/55 R18, uit elkaar.', iso: ['Wiel linksvoor'], deep: ['Wiel linksvoor'], cam: { dir: [1, 0.3, 0.6], pad: 1.08 } },
+  { id: 'body', cat: 'Carrosserie', label: 'Carrosserie', key: '6', note: 'Huid, kap, portieren, klep en lampen.', iso: ['Carrosserie'], open: ['Carrosserie'], cam: { dir: [1, 0.45, 1.05], pad: 1.04 } },
+  { id: 'doorLF', cat: 'Carrosserie', label: 'Portier linksvoor', note: 'Linker voorportier met ruit en spiegel.', iso: ['Portier linksvoor'], deep: ['Portier linksvoor'], cam: { dir: [1, 0.4, 0.55], pad: 1.08 } },
+  { id: 'headlampL', cat: 'Carrosserie', label: 'Koplamp links', note: 'Vierkante koplamp links, uit elkaar.', iso: ['Koplamp links'], deep: ['Koplamp links'], cam: { dir: [0.7, 0.3, 1], pad: 1.1 } },
+  { id: 'tailgate', cat: 'Carrosserie', label: 'Achterklep', note: 'Achterklep met achterruit en wisser.', iso: ['Achterklep'], deep: ['Achterklep'], cam: { dir: [0.45, 0.4, -1], pad: 1.08 } },
+  { id: 'interior', cat: 'Interieur', label: 'Interieur', key: '7', note: 'Dashboard, schermen en stoelen.', iso: ['Interieur'], open: ['Interieur', 'Stoelen', 'Dashboard'], cam: { dir: [0.9, 0.7, 0.6], pad: 1.05 } },
+  { id: 'dash', cat: 'Interieur', label: 'Dashboard', note: 'OpenR: instrumentenpaneel en middenscherm.', iso: ['Dashboard'], deep: ['Dashboard'], cam: { dir: [0.2, 0.45, -1], pad: 1.06 } },
+  { id: 'seat', cat: 'Interieur', label: 'Bestuurdersstoel', note: 'Bestuurdersstoel met gele bies.', iso: ['Bestuurdersstoel'], deep: ['Bestuurdersstoel'], cam: { dir: [1, 0.4, 0.7], pad: 1.08 } },
+  { id: 'openHood', cat: 'Openen', label: 'Motorruimte', note: 'Motorkap open.', opens: ['Motorkap'] },
+  { id: 'openDoors', cat: 'Openen', label: 'Instappen', note: 'De vier portieren open.', opens: ['Portier linksvoor', 'Portier rechtsvoor', 'Portier linksachter', 'Portier rechtsachter'], frame: [appCar], cam: { dir: [1, 0.7, 0.45], pad: 1.05 } },
+  { id: 'openTrunk', cat: 'Openen', label: 'Bagageruimte', note: 'Achterklep open.', opens: ['Achterklep'], frame: [appCar], cam: { dir: [0.6, 0.45, -1], pad: 1.06 } },
+  { id: 'openCharge', cat: 'Openen', label: 'Laden', note: 'Laadklep op de motorkap open.', opens: ['Laadklep'], frame: [appCar], cam: { dir: [0.8, 0.55, 1], pad: 1.08 } },
+  { id: 'openAll', cat: 'Openen', label: 'Alles open', note: 'Kap, klep, portieren, ruiten, spiegels en laadklep open.', opens: 'all', frame: [appCar], cam: { dir: [1, 0.5, 1], pad: 1.04 } },
+];
+const appTourSteps = ['assembled', 'main', 'bodyOff', 'motor', 'battery', 'charge', 'chassis', 'interior', 'openHood', 'openCharge', 'everything', 'assembled'];

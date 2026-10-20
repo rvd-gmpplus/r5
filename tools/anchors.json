@@ -1,0 +1,28 @@
+{
+ "root": ["Renault 5 E-Tech"],
+ "main": ["Carrosserie", "Interieur", "Aandrijflijn", "Onderstel", "Koeling en luchtinlaat", "Uitlaatsysteem", "Brandstofsysteem", "Elektrisch systeem"],
+ "root_children_order": ["Carrosserie", "Interieur", "Aandrijflijn", "Onderstel", "Koeling en luchtinlaat", "Uitlaatsysteem", "Brandstofsysteem", "Elektrisch systeem"],
+ "onderstel_children": ["Vooras en stuurinrichting", "Achteras", "Wielen", "Remsysteem"],
+ "contains": [["Aandrijflijn", "Motor 6AK"], ["Carrosserie", "Motorkap"], ["Carrosserie", "Laadklep"]],
+ "content": {},
+ "openers": [
+  "Renault 5 E-Tech/Carrosserie/Motorkap",
+  "Renault 5 E-Tech/Carrosserie/Motorkap/Laadklep",
+  "Renault 5 E-Tech/Carrosserie/Portier linksvoor",
+  "Renault 5 E-Tech/Carrosserie/Portier linksvoor/Zijruit linksvoor",
+  "Renault 5 E-Tech/Carrosserie/Portier linksvoor/Buitenspiegel links",
+  "Renault 5 E-Tech/Carrosserie/Portier rechtsvoor",
+  "Renault 5 E-Tech/Carrosserie/Portier rechtsvoor/Zijruit rechtsvoor",
+  "Renault 5 E-Tech/Carrosserie/Portier rechtsvoor/Buitenspiegel rechts",
+  "Renault 5 E-Tech/Carrosserie/Portier linksachter",
+  "Renault 5 E-Tech/Carrosserie/Portier linksachter/Zijruit linksachter",
+  "Renault 5 E-Tech/Carrosserie/Portier rechtsachter",
+  "Renault 5 E-Tech/Carrosserie/Portier rechtsachter/Zijruit rechtsachter",
+  "Renault 5 E-Tech/Carrosserie/Achterklep"
+ ],
+ "preset_ids": ["assembled", "main", "bodyOff", "xray", "everything", "tour", "motor", "motorDeep", "inverter", "reducer", "shafts", "battery", "cooling", "charge", "chassis", "frontAxle", "wheelLF", "body", "doorLF", "headlampL", "tailgate", "interior", "dash", "seat", "openHood", "openDoors", "openTrunk", "openCharge", "openAll"],
+ "triangle_budgets": {
+  "_uitleg": "driehoeken per hoofdgroep (tri.py --gate)",
+  "totaal": 700000
+ }
+}
