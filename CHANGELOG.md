@@ -4,7 +4,7 @@
 
 Eerste publicatie. Framework van laguna3, auto eigen werk.
 
-- Carrosserie: vijfdeurs hatchback, Pop-geel, zwart dak, vierkante koplampen, staande achterlichten, laadklep links op de motorkap.
+- Carrosserie: vijfdeurs hatchback uit panelen (rechte flanken, ronde wielkasten, vlakke kap), Pop-geel, zwart dak, vierkante koplampen, staande achterlichten, laadklep links op de motorkap.
 - Aandrijflijn: motor 6AK (110 kW), reductie met één verhouding, omvormer, twee aandrijfassen.
 - Onderstel: McPherson voor, torsieas achter, banden 195/55 R18, schijven voor en trommels achter.
 - Interieur: OpenR (twee schermen), stuur links, vijf zitplaatsen.

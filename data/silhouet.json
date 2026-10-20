@@ -1,15 +1,15 @@
 {
-  "_uitleg": "Silhouet in het autoframe. Versie 1 legt de stations vast op de huid van dit model (gemeten), als vangnet tot er een fotometing is. Zie docs/specificaties-en-bronnen.md.",
-  "top": [[1.7, 0.803], [1.2, 0.957], [0.6, 1.307], [0.0, 1.481], [-0.5, 1.455], [-1.0, 1.310], [-1.5, 1.059]],
-  "plan": [[1.85, 0.664], [1.4, 0.848], [0.8, 0.884], [0.0, 0.883], [-0.6, 0.883], [-1.2, 0.871], [-1.75, 0.830]],
-  "belt": [[0.7, 1.040], [0.3, 1.060], [-0.2, 1.056], [-0.7, 1.068]],
-  "axf": 1.212,
-  "axr": -1.328,
-  "neusMax": 0.82,
-  "staartMax": 0.86,
-  "tolAs": 0.025,
-  "tolOverhang": 0.035,
-  "maxBuiten": 1,
-  "planY": [0.55, 1.05],
-  "beltY": [0.9, 1.25]
+ "_uitleg": "Silhouet in het autoframe. Versie 1 legt de stations vast op de panelen van dit model (gemeten), als vangnet tot er een fotometing is.",
+ "top": [[1.7, 0.792], [1.2, 0.947], [0.6, 1.290], [0.0, 1.418], [-0.5, 1.418], [-1.0, 1.418], [-1.5, 0.844]],
+ "plan": [[1.85, 0.772], [1.4, 0.845], [0.8, 0.878], [0.0, 0.882], [-0.6, 0.882], [-1.2, 0.845], [-1.75, 0.845]],
+ "belt": [[0.7, 0.784], [0.3, 0.784], [-0.2, 0.804], [-0.7, 0.804]],
+ "axf": 1.212,
+ "axr": -1.328,
+ "neusMax": 0.82,
+ "staartMax": 0.88,
+ "tolAs": 0.025,
+ "tolOverhang": 0.035,
+ "maxBuiten": 1,
+ "planY": [0.55, 1.05],
+ "beltY": [0.70, 1.20]
 }
