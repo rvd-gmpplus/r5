@@ -38,5 +38,9 @@
   "hintVersie": "v1",
   "pnToelichting": false,
   "docshots": [["gemonteerd", "assembled"], ["hoofdgroepen", "main"], ["alles-uit-elkaar", "everything"], ["motor", "motor"], ["batterij", "battery"], ["rontgen", "xray"], ["openen-motorruimte", "openHood"], ["openen-laden", "openCharge"], ["openen-instappen", "openDoors"], ["openen-bagageruimte", "openTrunk"]],
-  "verboden": ["5 E-Tech", "Pop-geel", "6AK", "AmpR", "Comfort Range"]
+  "verboden": ["5 E-Tech", "Pop-geel", "6AK", "AmpR", "Comfort Range"],
+  "cockpit": null,
+  "extraTests": [
+    {"naam": "maat", "cmd": ["python3", "tools/maat.py"], "uitleg": "maatpoort tegen de opgegeven maten van Renault (lengte, breedte, hoogte, wielbasis, spoor, overhang, spiegels, band binnen de huid); docs/onderzoek/exterieur-maten.md"}
+  ]
 }

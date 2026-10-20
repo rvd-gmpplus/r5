@@ -183,6 +183,7 @@ function uiOpenAllTo(v) {
 }
 function uiSetOpenMode(on) {
   on = !!on;
+  if (COCKPIT) uiCkExit(); // Uitklappen of Openen kiezen stapt eerst uit de cockpit
   if (on === OPENMODE) return;
   uiStopPlay(); uiStopTour();
   uiPush();
@@ -194,10 +195,228 @@ function uiSetOpenMode(on) {
   uiUiChanged();
   uiAfterAction();
 }
-const uiOpenBtns = [...document.querySelectorAll('#openSeg [data-omode]')];
+
+/* ---------- cockpit: rondkijken vanaf een zitplaats (golf 5l) ---------- */
+// AUTO.cockpit is optioneel (auto.json): { stoelen: [{ id, label, knoop, oog: [x, y, z], kijk: [yaw, pitch], verberg: [knopen] }],
+// binnen: [groepen] }.
+// Het veld wordt met haken gelezen: tools/framework.py eist elk veld dat als AUTO-punt-naam in de generieke laag staat, en een auto
+// zonder cockpit toont gewoon geen knop Cockpit. Hoeken in graden: yaw 0 is recht vooruit (+z), positief naar links (+x); pitch
+// positief omhoog. Het oog beweegt binnen de doos uit CFG.cockpit rond de zitplaats (uiCk.off, in het autoframe).
+// Ingang: alles gemonteerd (preset assembled met keepOpen: openers blijven), geen isolatie, dimmen of röntgen; de ingesloten
+// delen onder AUTO.cockpit.binnen worden getekend (uiCkShow, app1.js). In de cockpit geldt needs niet (uiSetOpen, app1.js): het
+// dashboardkastje gaat open zonder eerst een portier. Uitgang: camera, doel, gezichtsveld en near/far exact terug.
+const UI_CK = (() => { const c = AUTO['cockpit']; return c && Array.isArray(c.stoelen) && c.stoelen.length ? c : null; })();
+const uiCkSeats = UI_CK ? UI_CK.stoelen : [];
+const uiCk = { yaw: 0, pitch: 0, fov: CFG.cockpit.fov, off: V3(0, 0, 0), last: uiCkSeats.length ? uiCkSeats[0].id : null };
+const uiCkV = V3(0, 0, 0), uiCkV2 = V3(0, 0, 0), uiCkM = new THREE.Matrix4(), uiCkUp = V3(0, 1, 0), UI_D2R = PI / 180;
+function uiCkSeat(id) { return uiCkSeats.find(st => st.id === id) || null; }
+// kijkrichting (eenheidsvector) uit yaw en pitch in graden
+function uiCkDir(yaw, pitch, out) { const y = yaw * UI_D2R, p = pitch * UI_D2R; return out.set(Math.sin(y) * Math.cos(p), Math.sin(p), Math.cos(y) * Math.cos(p)); }
+// de camerastand van de cockpit: het oog (zitplaats plus verschuiving) en de oriëntatie naar de kijkrichting
+function uiCkPose(pos, quat) {
+  pos.set(...COCKPIT.oog).add(uiCk.off);
+  uiCkDir(uiCk.yaw, uiCk.pitch, uiCkV2).add(pos);
+  quat.setFromRotationMatrix(uiCkM.lookAt(pos, uiCkV2, uiCkUp));
+}
+// het gezichtsveld geldt voor de korte kant van het beeld: liggend verticaal, staand (telefoon) horizontaal; camera.fov is verticaal
+function uiCkVfov() {
+  const a = camera.aspect, f = uiCk.fov;
+  return a >= 1 ? f : Math.min(CFG.cockpit.vfovMax, 2 * Math.atan(Math.tan(f * UI_D2R / 2) / a) / UI_D2R);
+}
+function uiCkApply() {
+  if (!COCKPIT || uiCkAnim) return;
+  uiCkPose(camera.position, camera.quaternion);
+  controls.target.copy(uiCkDir(uiCk.yaw, uiCk.pitch, uiCkV)).add(camera.position); // het doel een meter voor het oog
+  const vf = uiCkVfov();
+  if (camera.fov !== vf) { camera.fov = vf; camera.updateProjectionMatrix(); }
+  // omkijken: de eigen hoofdsteun en rugleuning zouden het beeld vullen; die verdwijnen voorbij CFG.cockpit.verbergYaw
+  const hide = Math.abs(uiCk.yaw) > CFG.cockpit.verbergYaw ? uiCkHideOf(COCKPIT) : null;
+  if (hide !== uiCkHide) { uiCkHide = hide; applyVisibility(); }
+  camera.updateMatrixWorld();
+  requestRender();
+}
+function uiCkClamp() {
+  const c = CFG.cockpit;
+  uiCk.yaw = clamp(uiCk.yaw, -c.yawMax, c.yawMax); uiCk.pitch = clamp(uiCk.pitch, c.pitchMin, c.pitchMax);
+  uiCk.off.set(clamp(uiCk.off.x, -c.opzij, c.opzij), clamp(uiCk.off.y, -c.omlaag, c.omhoog), clamp(uiCk.off.z, -c.achter, c.voor));
+  uiCk.fov = clamp(uiCk.fov, c.fovMin, c.fovMax);
+}
+function uiCkLook(yaw, pitch) { uiCk.yaw = +yaw || 0; uiCk.pitch = +pitch || 0; uiCkClamp(); uiCkApply(); }
+// hoofd draaien met dx, dy pixels: de scène volgt de vinger (zoals een panoramafoto), een volle schermhoogte is het gezichtsveld
+function uiCkTurn(dx, dy) { const k = camera.fov / Math.max(1, H); uiCkLook(uiCk.yaw + dx * k, uiCk.pitch + dy * k); }
+// vooroverbuigen en opzij, in meter: right naar rechts en fwd vooruit in de kijkrichting (horizontaal), up omhoog
+function uiCkShift(right, fwd, up) {
+  const y = uiCk.yaw * UI_D2R;
+  uiCk.off.x += -Math.cos(y) * right + Math.sin(y) * fwd;
+  uiCk.off.z += Math.sin(y) * right + Math.cos(y) * fwd;
+  uiCk.off.y += up;
+  uiCkClamp(); uiCkApply();
+}
+function uiCkZoom(f) { uiCk.fov *= f; uiCkClamp(); uiCkApply(); }
+// dubbelklik en C: de blik terug naar de standaard van de zitplaats, het hoofd terug op zijn plaats (het gezichtsveld blijft)
+function uiCkReset() { if (!COCKPIT) return; uiCk.off.set(0, 0, 0); const k = COCKPIT.kijk || [0, 0]; uiCkLook(k[0], k[1]); }
+// de delen uit verberg van een zitplaats (pad of unieke naam), één keer per zitplaats opgezocht
+const uiCkHideSets = new Map();
+function uiCkHideOf(seat) {
+  let set = uiCkHideSets.get(seat);
+  if (!set) {
+    set = new Set();
+    for (const ref of seat.verberg || []) { const n = uiResolve(ref); if (n) set.add(n); else console.error('cockpit: verberg ' + JSON.stringify(ref) + ' van ' + seat.id + ' lost niet op'); }
+    uiCkHideSets.set(seat, set);
+  }
+  return set.size ? set : null;
+}
+// Buitenwereld van de cockpit: een luchtkoepel en een grondvlak met kleurverlopen (CFG.cockpit.wereld, per thema), lui gebouwd en
+// alleen zichtbaar zolang de cockpit aanstaat. Daarbuiten blijven de achtergrond van de pagina en het raster (ground) zoals ze waren.
+// Vlak getekend (geen licht, geen toonafbeelding): de kleuren zijn wat er staat. De vertexkleuren zijn lineair, Color.setHex rekent om.
+let uiCkWorld = null;
+function uiCkWorldMake() {
+  const R = CFG.cockpit.wereldR, g = new THREE.Group(); g.name = 'uiCockpitWereld'; g.visible = false;
+  const mat = side => new THREE.MeshBasicMaterial({ vertexColors: true, side, toneMapped: false, depthWrite: false });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(R, 32, 16), mat(THREE.BackSide)); sky.renderOrder = -4;
+  const gr = new THREE.Mesh(new THREE.RingGeometry(0.01, R * 0.98, 48, 12), mat(THREE.FrontSide)); gr.rotation.x = -HALF; gr.renderOrder = -3;
+  for (const m of [sky, gr]) m.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(m.geometry.attributes.position.count * 3), 3));
+  g.add(sky, gr); scene.add(g);
+  return (uiCkWorld = { g, sky, gr });
+}
+function uiCkWorldColors(dark) {
+  const w = uiCkWorld; if (!w) return;
+  const c = CFG.cockpit.wereld[dark ? 'donker' : 'licht'], R = CFG.cockpit.wereldR, A = new THREE.Color(), B = new THREE.Color(), C = new THREE.Color();
+  const fill = (mesh, f) => { const p = mesh.geometry.attributes.position, col = mesh.geometry.attributes.color; for (let i = 0; i < p.count; i++) { f(p.getX(i), p.getY(i), p.getZ(i), C); col.setXYZ(i, C.r, C.g, C.b); } col.needsUpdate = true; };
+  // lucht: van de horizon naar het zenit (wortel: het licht blijft lang aan de horizon); onder de horizon de verre grond
+  fill(w.sky, (x, y, z, out) => { const t = y / R; if (t >= 0) out.copy(A.setHex(c.horizon)).lerp(B.setHex(c.zenit), Math.sqrt(t)); else out.setHex(c.grondVer); });
+  // grond (RingGeometry ligt in x, y voor het draaien): bij de auto vlak grijs, vanaf een kwart van de straal naar de vage horizon
+  fill(w.gr, (x, y, z, out) => { const t = clamp((Math.hypot(x, y) / R - 0.12) / 0.88, 0, 1); out.copy(A.setHex(c.grond)).lerp(B.setHex(c.grondVer), Math.pow(t, 0.6)); });
+}
+// lichtstand van de cockpit (vanuit uiThemeLights in core.js, dat eerst de lichten van het thema zet): zon lager en zachter,
+// meer hemellicht, het cabinelicht aan; de kleuren van de buitenwereld volgen het thema
+function uiCkLights(dark) {
+  const L = CFG.cockpit.licht;
+  sun.intensity = L.zon; sun.position.set(...L.zonPos);
+  uiHemi.intensity += L.hemiPlus;
+  uiCabin.intensity = dark ? L.cabineDonker : L.cabine;
+  uiCkWorldColors(dark);
+}
+// cockpit aan of uit voor de omgeving: buitenwereld, raster en lichten
+function uiCkEnv(on) {
+  if (on && !uiCkWorld) uiCkWorldMake();
+  if (uiCkWorld) uiCkWorld.g.visible = on;
+  ground.visible = !on;
+  if (on) uiCabin.position.set(...(UI_CK.licht || [0, 1, 0]));
+  uiCkLightOn = on; uiThemeLights();
+  requestRender();
+}
+// Uitstappen: een opener die alleen van binnen open kon (needs dicht, zoals het dashboardkastje achter een dicht portier) gaat
+// weer dicht, zodat buiten de regel van needs weer klopt; al het andere blijft zoals het in de cockpit stond
+function uiCkCloseInside(instant) {
+  for (let more = true; more;) {
+    more = false;
+    for (const n of OPENERS) if (n.ot > 0 && n.opn.needN && n.opn.needN.ot === 0) { uiSetOpen(n, 0, instant); more = true; }
+  }
+}
+// de ingesloten knopen die in de cockpit zichtbaar zijn: alles met inner onder de groepen van AUTO.cockpit.binnen
+function uiCkInner() {
+  const set = new Set();
+  for (const ref of UI_CK.binnen || []) {
+    const g = uiResolve(ref);
+    if (!g) { console.error('cockpit: groep ' + JSON.stringify(ref) + ' uit auto.json lost niet op'); continue; }
+    for (const n of subtree(g)) if (n.inner) set.add(n);
+  }
+  return set;
+}
+// overgang van de huidige camerastand naar p1, q1, f1 (exit: terug naar de camera van voor de cockpit); bij minder beweging direct
+function uiCkStart(p1, q1, f1, exit, instant) {
+  const dur = REDUCED || instant ? 0 : CFG.cockpit.overgangS;
+  uiCkAnim = { p0: camera.position.clone(), q0: camera.quaternion.clone(), f0: camera.fov, p1, q1, f1, t: 0, dur, exit };
+  if (!dur) uiCkAnimEnd(); else uiWake();
+}
+function uiStepCk(dt) {
+  const a = uiCkAnim; if (!a) return false;
+  a.t = Math.min(1, a.t + dt / a.dur);
+  const k = ease(a.t);
+  camera.position.lerpVectors(a.p0, a.p1, k); camera.quaternion.slerpQuaternions(a.q0, a.q1, k);
+  camera.fov = lerp(a.f0, a.f1, k); camera.updateProjectionMatrix();
+  if (a.t >= 1) uiCkAnimEnd();
+  return true;
+}
+function uiCkAnimEnd() {
+  const a = uiCkAnim; if (!a) return;
+  uiCkAnim = null;
+  if (a.exit) uiCkRestore(); else uiCkApply();
+}
+// de camera van voor de cockpit exact terug, met het kader en de gebruikerscamera (geen herkadrering na het uitstappen)
+function uiCkRestore() {
+  const sv = uiCkSave; if (!sv) return;
+  camera.position.copy(sv.pos); camera.quaternion.copy(sv.quat); controls.target.copy(sv.target);
+  camera.fov = sv.fov; camera.near = sv.near; camera.far = sv.far; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  // het kader van voor de cockpit hoort bij deze camera en bij het vrije beeld van nu (het dock is bij het uitstappen al
+  // terug): zo herkadreert de wachtende layoutwijziging niet, en een latere formaatwissel wel
+  uiLastFit = sv.lastFit; uiFitRef = sv.lastFit; uiFitFree = H - VIEW.t - VIEW.b; uiUserCam = sv.user;
+  uiCkSave = null; controls.enabled = true;
+  requestRender();
+}
+// instappen op zitplaats id (of overstappen); null stapt uit. opt.instant: zonder overgang (adresbalk, testhaak)
+function uiSetCockpit(id, opt = {}) {
+  if (id == null || id === false) return uiCkExit(opt.instant);
+  const seat = UI_CK && uiCkSeat(String(id));
+  if (!seat) return false;
+  uiStopPlay(); uiStopTour(); hideHint(); uiCloseMenu(false);
+  const first = !COCKPIT;
+  if (first) {
+    uiPush();
+    if (!uiCkSave) { // (tijdens de overgang terug staat de oude camera er nog)
+      // loopt er een camera-animatie, dan telt haar eindstand
+      const pos = camAnim ? camAnim.p1.clone() : camera.position.clone(), target = camAnim ? camAnim.t1.clone() : controls.target.clone();
+      const quat = camAnim ? new THREE.Quaternion().setFromRotationMatrix(uiCkM.lookAt(pos, target, camera.up)) : camera.quaternion.clone();
+      uiCkSave = { pos, target, quat, fov: camera.fov, near: camera.near, far: camera.far, lastFit: uiLastFit, fitFree: uiLastFit === uiFitRef ? uiFitFree : H - VIEW.t - VIEW.b, user: uiUserCam };
+    }
+    camAnim = null; controls.enabled = false;
+    uiCk.fov = CFG.cockpit.fov;
+  }
+  if (!uiCkShow) uiCkShow = uiCkInner();
+  COCKPIT = seat; uiCk.last = seat.id;
+  if (first) uiCkEnv(true);
+  uiCk.off.set(0, 0, 0); const k = seat.kijk || [0, 0]; uiCk.yaw = k[0]; uiCk.pitch = k[1]; uiCkClamp();
+  camera.near = CFG.cockpit.near; camera.far = CFG.cockpit.far; camera.updateProjectionMatrix();
+  // alles gemonteerd en zonder isolatie, dimmen of röntgen; de openers en de klikmodus blijven (de camera staat al vast)
+  if (first) appApplyPreset(appPresetById.get('assembled'), { noHistory: true, openMode: OPENMODE, keepOpen: true });
+  else { uiVisDirty = true; }
+  const p1 = V3(0, 0, 0), q1 = new THREE.Quaternion(); uiCkPose(p1, q1);
+  uiCkStart(p1, q1, uiCkVfov(), false, opt.instant);
+  uiAfterAction();
+  return true;
+}
+function uiCkExit(instant) {
+  if (!COCKPIT) return false;
+  uiStopTour(); hideHint();
+  COCKPIT = null; uiCkShow = null; uiCkHide = null; applyVisibility();
+  uiCkEnv(false); uiCkCloseInside(instant);
+  const sv = uiCkSave;
+  if (sv) uiCkStart(sv.pos.clone(), sv.quat.clone(), sv.fov, true, instant); else uiCkAnim = null;
+  uiAfterAction();
+  return true;
+}
+function uiCkState() {
+  if (!COCKPIT) return null;
+  const r = v => +v.toFixed(4);
+  return { seat: COCKPIT.id, label: COCKPIT.label, yaw: r(uiCk.yaw), pitch: r(uiCk.pitch), fov: r(uiCk.fov), off: uiCk.off.toArray().map(r), eye: V3(...COCKPIT.oog).add(uiCk.off).toArray().map(r), moving: !!uiCkAnim };
+}
+// keuzelijst van de zitplaatsen (in het dock op de plek van de explosieschuif) en de knop Uitstappen
+const uiCkSel = $('ckSeat');
+for (const st of uiCkSeats) { const o = document.createElement('option'); o.value = st.id; o.textContent = st.label; uiCkSel.appendChild(o); }
+uiCkSel.addEventListener('change', () => { hideHint(); uiSetCockpit(uiCkSel.value); });
+$('btnCkOut').onclick = () => uiCkExit();
+// zonder cockpit in auto.json: geen knop, geen uitleg in de hulp
+if (!UI_CK) { const b = document.querySelector('#openSeg [data-ckmode]'); if (b) b.remove(); $('openSeg').setAttribute('aria-label', TXT.segZonderCockpit); }
+document.querySelectorAll('.ckhelp').forEach(e => { e.hidden = !UI_CK; });
+// De segmentknop bovenin is één radiogroep: Uitklappen, Openen en Cockpit. De knop Cockpit heeft een eigen attribuut
+// (data-ckmode): data-omode blijft de klikstand van Uitklappen of Openen, zoals de tests en de adresbalk die kennen.
+const uiOpenBtns = [...document.querySelectorAll('#openSeg [role="radio"]')];
+const uiViewModeOf = b => (b.dataset.ckmode ? 'cockpit' : b.dataset.omode);
+function uiSetViewMode(m) { if (m === 'cockpit') uiSetCockpit(COCKPIT ? COCKPIT.id : uiCk.last); else uiSetOpenMode(m === 'open'); }
 uiOpenBtns.forEach((b, i) => {
-  b.addEventListener('click', () => { hideHint(); uiSetOpenMode(b.dataset.omode === 'open'); });
-  b.addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : uiOpenBtns.length - 1)) % uiOpenBtns.length; uiSetOpenMode(uiOpenBtns[j].dataset.omode === 'open'); uiOpenBtns[j].focus(); e.preventDefault(); });
+  b.addEventListener('click', () => { hideHint(); uiSetViewMode(uiViewModeOf(b)); });
+  b.addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : uiOpenBtns.length - 1)) % uiOpenBtns.length; uiSetViewMode(uiViewModeOf(uiOpenBtns[j])); uiOpenBtns[j].focus(); e.preventDefault(); });
 });
 $('btnOpenAll').onclick = () => uiOpenAllTo(true);
 $('btnCloseAll').onclick = () => uiOpenAllTo(false);
@@ -222,18 +441,21 @@ function uiCloseOpenList() {
   if (!uiOpenListOn || !uiNarrow()) return;
   uiOpenListOn = false; $('btnOpenList').setAttribute('aria-expanded', 'false'); uiSyncOpenUi(); uiUiChanged(); layoutView();
 }
-let uiOpenWas = false;
+let uiOpenWas = 'expand';
 function uiSyncOpenUi() {
   uiUrlSync(); // de adresbalk volgt de openstand (ook via de testhaken setOpen en openAll)
-  $('app').classList.toggle('omode', OPENMODE);
-  uiOpenBtns.forEach(b => { const on = (b.dataset.omode === 'open') === OPENMODE; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  $('app').classList.toggle('omode', OPENMODE && !COCKPIT);
+  $('app').classList.toggle('ckmode', !!COCKPIT);
+  const cur = COCKPIT ? 'cockpit' : OPENMODE ? 'open' : 'expand';
+  uiOpenBtns.forEach(b => { const on = uiViewModeOf(b) === cur; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  if (UI_CK) { const v = COCKPIT ? COCKPIT.id : uiCk.last; if (uiCkSel.value !== v) uiCkSel.value = v; }
   let open = 0;
   for (const [n, b] of uiOpenChips) { const on = n.ot > 0; if (on) open++; if (b.getAttribute('aria-pressed') !== String(on)) b.setAttribute('aria-pressed', String(on)); }
   const txt = open + '/' + OPENERS.length;
   if ($('openCount').textContent !== txt) $('openCount').textContent = txt;
-  const showList = OPENMODE && uiOpenListOn;
+  const showList = OPENMODE && !COCKPIT && uiOpenListOn;
   if ($('openList').hidden === showList) $('openList').hidden = !showList;
-  if (uiOpenWas !== OPENMODE) { uiOpenWas = OPENMODE; uiUiChanged(); layoutView(); }
+  if (uiOpenWas !== cur) { uiOpenWas = cur; uiUiChanged(); layoutView(); }
 }
 
 /* ---------- weergave-bediening ---------- */

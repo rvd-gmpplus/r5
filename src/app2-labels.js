@@ -10,7 +10,7 @@ const uiAnchor = V3(0, 0, 0), uiGc = V3(0, 0, 0);
 // uitgeklapt is. vooruit (uiAnchorPrefetch): al zodra de groep opengaat, en zonder de vaste labelgroep van een preset.
 // Golf 5c-2, K3: de ankerrij had een eigen kopie van deze keuze.
 function uiLabelGroup(vooruit = false) {
-  if (!LABELS) return null;
+  if (!LABELS || COCKPIT) return null; // in de cockpit geen labels
   if (!vooruit && uiLabelForce && CTX) return CTX;
   const ok = g => g && uiOpen(g) && (vooruit || g.amt > 0.6);
   if (SEL && SEL.asm && ok(SEL)) return SEL;
@@ -178,7 +178,7 @@ function updateLabels() {
   const g = uiLabelGroup();
   const max = W < CFG.indeling.smal ? CFG.indeling.labelsSmal : CFG.indeling.labels;
   uiCands.length = 0;
-  if (SEL && !SEL.asm && SEL.ev && LABELS) uiCands.push(SEL);
+  if (SEL && !SEL.asm && SEL.ev && LABELS && !COCKPIT) uiCands.push(SEL);
   const lp = uiLabelForce && ACTIVE_PRESET ? appPresetById.get(ACTIVE_PRESET) : null;
   const only = lp && lp.labelOnly && g && g.name === lp.labels ? lp.labelOnly : null;
   let eligible = 0; // U2: alle kinderen die een label zouden kunnen krijgen, ook voorbij het maximum

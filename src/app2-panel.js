@@ -122,7 +122,14 @@ const UI_MODES = {
     uitklap: false, dubbel: false, dim: false, tint: n => !n.opn,
   },
 };
-const uiMode = () => (OPENMODE ? UI_MODES.open : UI_MODES[MODE] || UI_MODES.part); // een onbekende klikmodus (testhaak setMode) werkt als Onderdeel
+// Cockpit (golf 5l): klikken zoals in Openen (een opener gaat open of dicht en de kaart toont hem), maar de camera blijft op de
+// stoel: kiezen in de lijst of het paneel selecteert alleen, en een dubbelklik zet de blik terug (dubbelAct, uiCkReset).
+UI_MODES.cockpit = Object.assign({}, UI_MODES.open, {
+  reveal: n => { uiPush(); select(n); uiAfterAction(); },
+  desc: n => (n === ROOT && COCKPIT ? TXT.ckUitleg(COCKPIT.label) : (n.d || '')),
+  dubbelAct: () => uiCkReset(),
+});
+const uiMode = () => (COCKPIT ? UI_MODES.cockpit : OPENMODE ? UI_MODES.open : UI_MODES[MODE] || UI_MODES.part); // een onbekende klikmodus (testhaak setMode) werkt als Onderdeel
 
 /* ---------- onderdeelnummers ---------- */
 // Gegevens uit PN_DATA (src/partnumbers.js). map: pad zonder wortel -> [eenheid, 'zelf' | 'deel' | 'set', regel].
@@ -314,7 +321,7 @@ function select(n, opts = {}) {
 let uiPanelKey = '';
 function renderPanel() {
   const n = SEL || ROOT;
-  const key = n.id + '|' + (OPENMODE ? 1 : 0) + '|' + uiPnGen;
+  const key = n.id + '|' + (COCKPIT ? 'c' + COCKPIT.id : OPENMODE ? 1 : 0) + '|' + uiPnGen;
   if (key !== uiPanelKey) { uiPanelKey = key; uiPanelFixed(n); }
   // U6: de live regions (#selName, #selMeta) alleen beschrijven als er iets verandert; een schermlezer leest anders elke
   // herhaalde opbouw van het paneel voor (bij elke handeling twee tot drie keer)
@@ -334,6 +341,7 @@ function renderPanel() {
   els.dim.hidden = !DIM || !m.uitklap;
   if (DIM) els.dim.title = TXT.dimTitel(DIM.name);
   els.up.hidden = !m.uitklap; els.iso.hidden = !m.uitklap;
+  els.focus.hidden = !!COCKPIT; // in de cockpit blijft de camera op de stoel
   els.up.disabled = !uiClosedAbove(n);
   els.up.title = els.up.disabled ? TXT.omhoogVol : TXT.omhoogTitel;
   const isoOn = ISO.length === 1 && ISO[0] === n;

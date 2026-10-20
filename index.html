@@ -1,6 +1,6 @@
 <!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
 <title>Renault 5 E-Tech explosietekening</title>
-<meta name="model-version" content="1 (bron 439c95a)">
+<meta name="model-version" content="1 (bron 379fab1)">
 <meta name="description" content="Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026, Comfort Range): onderdelen die uitklappen, en een kap, portieren, klep en laadklep die opengaan.">
 <meta property="og:title" content="Renault 5 E-Tech explosietekening">
 <meta property="og:description" content="Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026): motor, batterij en carrosserie die uitklappen.">
@@ -235,6 +235,14 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 #openList{display:flex;flex-wrap:wrap;gap:6px;box-sizing:border-box;max-width:100%;max-height:min(34vh,220px);overflow:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow)}
 #openList button{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700}
 #openList button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+/* ---------- cockpit (golf 5l): zitplaats en Uitstappen op de plek van de explosieschuif; geen presets, labels of klikmodus ---------- */
+#ckCtl{display:none;gap:6px;padding:3px}
+#app.ckmode #ckCtl{display:inline-flex}
+#app.ckmode #modes,#app.ckmode #openCtl,#app.ckmode #xctl,#app.ckmode #presets,#app.ckmode #openList,#app.ckmode #isoBadge{display:none}
+#app.ckmode #btnExplodeAll,#app.ckmode #btnCollapseAll,#app.ckmode label[for="spread"],#app.ckmode #spread{display:none}
+#ckSeat{border:1px solid var(--line);background:var(--chip);color:var(--chip-ink);border-radius:999px;height:32px;padding:0 10px;font-size:13px;font-weight:700;min-width:0;max-width:100%;cursor:pointer}
+#ckCtl #btnCkOut{flex:0 0 auto;border-radius:999px;padding:6px 14px;font-size:13px;white-space:nowrap}
+.dlg dl>div{display:contents}
 /* ---------- onderdeelnummers ---------- */
 .pn{margin:0 0 14px}
 .pn-lvl{display:inline-block;min-width:16px;margin:0 4px;padding:0 4px;border-radius:5px;border:1px solid var(--line);font:600 10.5px/1.5 var(--f-mono);text-align:center}
@@ -285,6 +293,8 @@ input[type=range]{width:100%;accent-color:var(--ink)}
   #app.omode #openCtl{flex:1 1 auto;min-width:0}
   #app.omode #openCtl button{min-width:0;padding-left:2px;padding-right:2px}
   #app.omode .xctl{flex:0 0 auto}
+  #app.ckmode #ckCtl{flex:1 1 auto;min-width:0}
+  #app.ckmode #ckSeat{flex:1 1 auto}
   #sheet{left:0;right:0;bottom:0;border-radius:18px 18px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);max-height:calc(100% - 140px - env(safe-area-inset-top,0px));transition:height .28s ease}
   #sheet[data-state="peek"]{height:auto}
   #sheet[data-state="peek"] .tabs,#sheet[data-state="peek"] .tabpanels{display:none}
@@ -493,9 +503,10 @@ input[type=range]{width:100%;accent-color:var(--ink)}
       <h1>Renault 5 <span>E-Tech electric</span></h1>
       <p class="sub">2026 · 5-deurs hatchback · Pop-geel · <b>110 kW · 52 kWh</b><span class="long"> · Comfort Range</span></p>
     </div>
-    <div class="open-row"><div class="seg" id="openSeg" role="radiogroup" aria-label="Wat doet een klik: uitklappen of openen">
+    <div class="open-row"><div class="seg" id="openSeg" role="radiogroup" aria-label="Modus: uitklappen, openen of in de cockpit rondkijken">
       <button role="radio" aria-checked="true" tabindex="0" data-omode="expand" title="Een klik klapt de groep van het onderdeel uit (sneltoets O wisselt)">Uitklappen</button>
       <button role="radio" aria-checked="false" tabindex="-1" data-omode="open" title="Een klik opent een portier, de kap, de klep en andere openers (sneltoets O wisselt)">Openen</button>
+      <button role="radio" aria-checked="false" tabindex="-1" data-ckmode="cockpit" title="In de auto zitten en rondkijken vanaf een zitplaats (sneltoets K)">Cockpit</button>
     </div></div>
     <div class="top-actions">
       <button class="iconbtn" id="help" aria-label="Uitleg over de bediening" aria-haspopup="dialog">?</button>
@@ -600,6 +611,11 @@ input[type=range]{width:100%;accent-color:var(--ink)}
           <button class="pbtn" id="undo" aria-label="Stap terug" title="Stap terug (Backspace)" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg><span>Stap terug</span></button>
         </div>
       </div>
+      <div class="seg" id="ckCtl" role="group" aria-label="Cockpit">
+        <label class="seg-lbl" for="ckSeat">Zitplaats</label>
+        <select id="ckSeat" aria-label="Zitplaats" title="De zitplaats waarvandaan je rondkijkt"></select>
+        <button class="btn primary" id="btnCkOut" title="De cockpit verlaten; de camera gaat terug naar waar hij was (Esc)">Uitstappen</button>
+      </div>
     </div>
     <div class="cats" id="presets" role="toolbar" aria-label="Presets per categorie"></div>
   </nav>
@@ -618,7 +634,7 @@ input[type=range]{width:100%;accent-color:var(--ink)}
   <div id="press" hidden><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/></svg></div>
   <div id="helpDlg" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <h2 id="helpTitle">Bediening</h2>
-    <p class="ver">Renault 5 E-Tech explosietekening, versie 1 (bron 439c95a)</p>
+    <p class="ver">Renault 5 E-Tech explosietekening, versie 1 (bron 379fab1)</p>
     <div id="helpMouse"><h3>Met de muis</h3><dl>
       <dt>Klik</dt><dd>De groep van het onderdeel klapt uit; de rest blijft staan. Staat die groep al open, dan wordt het onderdeel uitgelicht.</dd>
       <dt>Dubbelklik</dt><dd>Direct naar dit onderdeel: alle groepen erboven gaan laag voor laag open.</dd>
@@ -632,6 +648,7 @@ input[type=range]{width:100%;accent-color:var(--ink)}
       <dt>Eén vinger · twee vingers</dt><dd>Draaien · knijpen om te zoomen en schuiven.</dd></dl></div>
     <h3>Bediening onderin</h3><dl>
       <dt>Uitklappen · Openen</dt><dd>Bovenin: Uitklappen haalt groepen uit elkaar, Openen laat portieren, kap, klep en andere openers draaien of schuiven. Bij Openen opent een klik de buitenste dichte opener op het onderdeel, daarna de volgende naar binnen; zijn ze open, dan sluit de binnenste. Rechtsklik, Shift+klik of vasthouden sluit de binnenste open opener. Het dock heeft dan Alles open, Alles dicht en een lijst van alle openers. Wat open staat, blijft open als je naar Uitklappen wisselt: open de motorkap en klap daarna de motor uit.</dd>
+      <div class="ckhelp"><dt>Cockpit</dt><dd>Bovenin, naast Uitklappen en Openen (sneltoets <kbd>K</kbd>): je zit in de auto op de gekozen zitplaats en kijkt rond. Slepen draait het hoofd, scrollen of knijpen zoomt, rechts slepen, Shift+slepen of twee vingers buigen voorover of opzij, dubbelklik zet de blik terug. Een klik opent of sluit een opener (dashboardkastje, portier, zonnescherm) en toont het onderdeel; er klapt niets uit. Uitstappen of <kbd>Esc</kbd> zet de camera terug waar hij was. Wat je binnen open hebt gezet, blijft open; alleen wat van buiten pas na een portier open kan (zoals het dashboardkastje bij een dicht portier), gaat bij het uitstappen weer dicht.</dd></div>
       <dt>Klik: …</dt><dd>Onderdeel (standaard), Laag voor laag (van buiten naar binnen), Inklappen of alleen Info.</dd>
       <dt>Explosie</dt><dd>Schuif om de gekozen groep laag voor laag uit elkaar te halen; Demonteren en Monteren spelen dat af.</dd>
       <dt>Presets</dt><dd id="helpCats"></dd>
@@ -642,6 +659,8 @@ input[type=range]{width:100%;accent-color:var(--ink)}
       <dt><kbd>Backspace</kbd></dt><dd>Stap terug.</dd>
       <dt><kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>Door de onderdelen lopen: bovenliggende groep, eerste deel, vorige of volgende op hetzelfde niveau.</dd>
       <dt><kbd>O</kbd></dt><dd>Wisselt tussen Uitklappen en Openen. In Openen opent <kbd>Enter</kbd> de opener van de selectie en sluit <kbd>Shift</kbd>+<kbd>Enter</kbd> hem.</dd>
+      <div class="ckhelp"><dt><kbd>K</kbd> · <kbd>C</kbd></dt><dd>Cockpit aan of uit (<kbd>O</kbd> en <kbd>Esc</kbd> stappen ook uit) · in de cockpit de blik terugzetten (ook met dubbelklik).</dd></div>
+      <div class="ckhelp"><dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>W</kbd> <kbd>S</kbd></dt><dd>In de cockpit: opzij, voorover of achterover, omhoog of omlaag buigen (binnen een kleine ruimte rond de zitplaats).</dd></div>
       <dt><kbd>Esc</kbd></dt><dd>Menu sluiten of de hele auto selecteren.</dd>
       <dt id="helpKeysT"></dt><dd id="helpKeys"></dd>
       <dt><kbd>/</kbd></dt><dd>Zoek een onderdeel in de onderdelenlijst.</dd>
@@ -658,7 +677,7 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js" integrity="sha384-pbzJRmVHtSKsmXtn1S+SJW8hayfjfMEXhWq2f0To4wY9ZMxJUdax1AcGoD3gv3OV" crossorigin="anonymous"></script>
 <script type="application/json" id="pn">{"meta":{"vehicle":"Renault 5 E-Tech electric, Techno Comfort Range, 52 kWh, 110 kW, modeljaar 2026","auto":"Techno Comfort Range, Pop-geel met zwart dak, motor 6AK, batterij 52 kWh. Versie 1 heeft nog geen onderdeelnummers; de boom staat in de CSV als niet onderzocht."},"units":{},"map":[],"info":{}}</script>
 <script>
-const AUTO = Object.freeze({"id": "r5", "hook": "__model", "merk": "Renault", "wortel": "Renault 5 E-Tech", "titel": "Renault 5 E-Tech explosietekening", "h1": "Renault 5", "h1sub": "E-Tech electric", "sub": "2026 · 5-deurs hatchback · Pop-geel · <b>110 kW · 52 kWh</b><span class=\"long\"> · Comfort Range</span>", "beschrijving": "Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026, Comfort Range): onderdelen die uitklappen, en een kap, portieren, klep en laadklep die opengaan.", "ogBeschrijving": "Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026): motor, batterij en carrosserie die uitklappen.", "ogBeeld": "", "canvasLabel": "3D-explosietekening van een Renault 5 E-Tech electric. Klik op een onderdeel om het uit te klappen.", "notitie": "Schematisch 3D-model: vormen, maten en posities zijn benaderd en niet geschikt als montagevoorschrift. Technische gegevens komen uit openbare specificaties van deze auto; niet elk detail is voor de uitvoering Comfort Range 110 kW bevestigd. Beeldmerken zijn niet nagetekend.", "openUitleg": "Renault 5 E-Tech electric (modeljaar 2026), Techno Comfort Range, Pop-geel met zwart dak, motor 6AK van 110 kW en batterij van 52 kWh. Openen: klik op de motorkap, een portier, een ruit, een spiegel, de achterklep of de laadklep. Rechtsklik, Shift+klik of vasthouden sluit de binnenste open opener.", "pnType": "Renault 5 E-Tech electric, Comfort Range, 52 kWh, 110 kW, modeljaar 2026", "hintVersie": "v1", "pnToelichting": false, "docshots": [["gemonteerd", "assembled"], ["hoofdgroepen", "main"], ["alles-uit-elkaar", "everything"], ["motor", "motor"], ["batterij", "battery"], ["rontgen", "xray"], ["openen-motorruimte", "openHood"], ["openen-laden", "openCharge"], ["openen-instappen", "openDoors"], ["openen-bagageruimte", "openTrunk"]], "verboden": ["5 E-Tech", "Pop-geel", "6AK", "AmpR", "Comfort Range"]});
+const AUTO = Object.freeze({"id": "r5", "hook": "__model", "merk": "Renault", "wortel": "Renault 5 E-Tech", "titel": "Renault 5 E-Tech explosietekening", "h1": "Renault 5", "h1sub": "E-Tech electric", "sub": "2026 · 5-deurs hatchback · Pop-geel · <b>110 kW · 52 kWh</b><span class=\"long\"> · Comfort Range</span>", "beschrijving": "Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026, Comfort Range): onderdelen die uitklappen, en een kap, portieren, klep en laadklep die opengaan.", "ogBeschrijving": "Interactieve 3D-explosietekening van een Renault 5 E-Tech electric (2026): motor, batterij en carrosserie die uitklappen.", "ogBeeld": "", "canvasLabel": "3D-explosietekening van een Renault 5 E-Tech electric. Klik op een onderdeel om het uit te klappen.", "notitie": "Schematisch 3D-model: vormen, maten en posities zijn benaderd en niet geschikt als montagevoorschrift. Technische gegevens komen uit openbare specificaties van deze auto; niet elk detail is voor de uitvoering Comfort Range 110 kW bevestigd. Beeldmerken zijn niet nagetekend.", "openUitleg": "Renault 5 E-Tech electric (modeljaar 2026), Techno Comfort Range, Pop-geel met zwart dak, motor 6AK van 110 kW en batterij van 52 kWh. Openen: klik op de motorkap, een portier, een ruit, een spiegel, de achterklep of de laadklep. Rechtsklik, Shift+klik of vasthouden sluit de binnenste open opener.", "pnType": "Renault 5 E-Tech electric, Comfort Range, 52 kWh, 110 kW, modeljaar 2026", "hintVersie": "v1", "pnToelichting": false, "docshots": [["gemonteerd", "assembled"], ["hoofdgroepen", "main"], ["alles-uit-elkaar", "everything"], ["motor", "motor"], ["batterij", "battery"], ["rontgen", "xray"], ["openen-motorruimte", "openHood"], ["openen-laden", "openCharge"], ["openen-instappen", "openDoors"], ["openen-bagageruimte", "openTrunk"]], "verboden": ["5 E-Tech", "Pop-geel", "6AK", "AmpR", "Comfort Range"], "cockpit": null, "extraTests": [{"naam": "maat", "cmd": ["python3", "tools/maat.py"], "uitleg": "maatpoort tegen de opgegeven maten van Renault (lengte, breedte, hoogte, wielbasis, spoor, overhang, spiegels, band binnen de huid); docs/onderzoek/exterieur-maten.md"}]});
 'use strict';
 /* ===================== basis: renderer, scène, materialen, geometrie-hulpen ===================== */
 /* ---------- instellingen van de app (golf 5c-2, K1) ---------- */
@@ -704,6 +723,29 @@ const CFG = Object.freeze({
     kinderen: 80,        // knoppen in de lijst Bestaat uit
     treffers: 80,        // zoektreffers in de onderdelenlijst
     herkaderPx: 24,      // het vrije beeld verandert meer dan dit in hoogte: opnieuw inpassen
+  }),
+  // cockpit (golf 5l): rondkijken vanaf een zitplaats; hoeken in graden, afstanden in meter (de zitplaatsen staan in auto.json)
+  cockpit: Object.freeze({
+    fov: 70, fovMin: 40, fovMax: 90,          // verticaal gezichtsveld: standaard, kleinste en grootste
+    yawMax: 150, pitchMin: -60, pitchMax: 60, // hoofd draaien: opzij (beide kanten) en omlaag of omhoog
+    // vooroverbuigen: het oog blijft binnen deze doos rond de zitplaats. Achteruit maar 0,05 m: de hoofdsteun zit circa 0,14 m
+    // achter het oog, en met 0,15 m achteruit en 0,08 m omhoog lag hij 1 tot 2 cm achter het oog (ronde 3, advisor golf 5l)
+    opzij: 0.15, voor: 0.15, achter: 0.05, omlaag: 0.10, omhoog: 0.08,
+    vfovMax: 95,                              // staand (telefoon) wordt het gezichtsveld op de korte kant omgerekend; verticaal hoogstens zoveel
+    near: 0.02, far: 80,                      // dieptebereik van de camera in de cockpit (terug naar de oude waarden bij verlaten)
+    overgangS: 0.6,                           // overgang naar de stoel en terug (bij minder beweging direct)
+    verbergYaw: 90,                           // verder omkijken: de delen in verberg van de eigen zitplaats (auto.json) verdwijnen
+    stapM: 0.02,                              // pijltjes en W/S: zoveel meter per toetsaanslag
+    schuifMPx: 0.0006,                        // rechts slepen, Shift+slepen of twee vingers: meter per pixel
+    zoomWiel: 0.0012,                         // scrollen: gezichtsveld maal exp(deltaY x dit)
+    // lichtstand in de cockpit: zon lager en zachter, meer hemellicht, een zwak cabinelicht (plaats: auto.json cockpit.licht)
+    licht: Object.freeze({ zon: 0.75, zonPos: Object.freeze([4, 4.5, 7]), hemiPlus: 0.3, cabine: 0.55, cabineDonker: 0.7 }),
+    // buitenwereld rond de auto in de cockpit: lucht (zenit naar horizon) en een grondvlak (bij de auto naar de horizon)
+    wereldR: 55,
+    wereld: Object.freeze({
+      licht: Object.freeze({ zenit: 0x7f97b0, horizon: 0xdde3e8, grond: 0x6c7075, grondVer: 0xb4bbc1 }),
+      donker: Object.freeze({ zenit: 0x141c27, horizon: 0x3e4a57, grond: 0x2b2f34, grondVer: 0x39424c }),
+    }),
   }),
 });
 /* ---------- teksten van de app (golf 5c-2, K6) ---------- */
@@ -798,6 +840,9 @@ const TXT = Object.freeze({
   probeerTik: 'Probeer: tik op de motorkap', probeerKlik: 'Probeer: klik op de motorkap',
   hulpCats: cats => `${cats.length} categorieën (${cats.join(', ')}) met kant-en-klare standen, ook de rondleiding.`,
   hulpToetsen: (van, tot) => `<kbd>${van}</kbd> tot <kbd>${tot}</kbd>`,
+  // cockpit (golf 5l)
+  ckUitleg: stoel => 'Cockpit: je zit op de plaats ' + stoel.toLowerCase() + ' en kijkt rond. Slepen draait het hoofd, scrollen of knijpen zoomt, rechts slepen, Shift+slepen, twee vingers of de pijltjes en W/S buigen voorover of opzij; dubbelklik of C zet de blik terug. Een klik opent of sluit een opener (dashboardkastje, portier, zonnescherm). Uitstappen of Esc brengt de camera terug.',
+  segZonderCockpit: 'Wat doet een klik: uitklappen of openen', // de segmentknop bovenin bij een auto zonder cockpit
   // labels
   labelAria: (nr, naam) => `${nr}. ${naam}`,
   meer: n => `+${n} meer`,
@@ -870,11 +915,20 @@ scene.add(sun);
 const rim = new THREE.DirectionalLight(0xdfe8ff, 0.35);
 rim.position.set(-6, 3, -5);
 scene.add(rim);
+// cabinelicht van de cockpit (golf 5l): staat altijd in de scène, met sterkte 0 buiten de cockpit. Zo verandert het aantal lichten
+// nooit en hoeft geen shader opnieuw te compileren bij het instappen; 0 draagt niets bij, het gewone beeld blijft gelijk.
+const uiCabin = new THREE.PointLight(0xfff0dc, 0, 2.8, 1.5);
+scene.add(uiCabin);
+let uiCkLightOn = false;   // de lichtstand van de cockpit (uiCkLights in app2-controls.js) staat aan
+// Alle lichten uit het thema; in de cockpit daarna de lichtstand van de cockpit. Elke aanroep zet alles opnieuw, dus na het
+// uitstappen (uiCkLightOn uit) staan de lichten exact zoals het thema ze wil.
 // donkere modus: meer omgevings- en randlicht, zodat zwarte en donkergrijze onderdelen loskomen van de achtergrond
 function uiThemeLights() {
   const dark = getComputedStyle(document.documentElement).getPropertyValue('color-scheme').trim() === 'dark';
   uiHemi.intensity = dark ? 0.75 : 0.35; rim.intensity = dark ? 0.75 : 0.35;
   uiHemi.groundColor.setHex(dark ? 0x5a636d : 0x3c434b);
+  sun.intensity = 1.2; sun.position.set(4, 9, 6); uiCabin.intensity = 0;
+  if (uiCkLightOn) uiCkLights(dark);
 }
 uiThemeLights();
 
@@ -2089,8 +2143,9 @@ function uiSetOpen(n, v, instant) {
   if (typeof n === 'string') n = uiRef(n, 'setOpen');
   if (!n || !n.opn || n.opn.lead) return false;
   v = clamp(+v || 0, 0, 1);
-  if (v > 0 && n.opn.needN && n.opn.needN.ot === 0) uiSetOpen(n.opn.needN, 1, instant);
-  if (v === 0) for (const d of n.opn.needBy) if (d.ot > 0) uiSetOpen(d, 0, instant);
+  // needs is er voor de blik van buiten (eerst het portier, dan het kastje); in de cockpit zit je al binnen en geldt de keten niet
+  if (v > 0 && n.opn.needN && n.opn.needN.ot === 0 && !COCKPIT) uiSetOpen(n.opn.needN, 1, instant);
+  if (v === 0 && !COCKPIT) for (const d of n.opn.needBy) if (d.ot > 0) uiSetOpen(d, 0, instant);
   if (n.opn.vis && ((n.ot > 0) !== (v > 0) || (n.ou > 0) !== (v > 0))) uiVisDirty = true;
   if (instant || REDUCED) { n.ot = v; n.ou = v; n.opk = 1; uiOpenAnim.delete(n); uiOpenApply(n); uiStrutSync(); uiWake(); return true; }
   if (n.ot === v && (uiOpenAnim.has(n) || n.ou === v)) return true;
@@ -2252,6 +2307,13 @@ function isUnder(n, a) { for (let p = n; p; p = p.parent) if (p === a) return tr
 let ISO = [];
 let XRAY = false, SYSCOL = false, SEL = null;
 let OPENMODE = false;   // klikmodus Openen (bediening in app2-controls.js): een klik opent of sluit openers in plaats van uit te klappen
+// Cockpit (golf 5l, bediening in app2-controls.js): COCKPIT is de gekozen zitplaats uit auto.json (null: uit). Zolang de cockpit
+// aanstaat of de overgang naar de stoel of terug loopt (uiCkAnim), houdt de cockpit de camera vast (uiCamHeld): de orbitbediening,
+// het kadreren (focusNodes, animCam, herkadreren) en de regeling van near en far staan dan stil. uiCkSave is de camera van voor
+// de cockpit (stap terug bewaart die, niet het oog), uiCkShow de ingesloten knopen die in de cockpit toch getekend worden.
+// uiCkHide zijn de delen van de eigen stoel die verborgen zijn zolang je verder dan CFG.cockpit.verbergYaw omkijkt.
+let COCKPIT = null, uiCkAnim = null, uiCkSave = null, uiCkShow = null, uiCkHide = null;
+const uiCamHeld = () => !!(COCKPIT || uiCkAnim);
 let MODE = 'part', LABELS = true;   // klikmodus van het dock (UI_MODES in app2-panel.js) en de schakelaar Labels
 let CTX = null, ACTIVE_PRESET = 'assembled'; // groep die de labels krijgt na de laatste handeling; actieve preset (null: geen)
 let uiLabelForce = false;          // de labels van CTX gaan voor (preset met `labels`, uiLabelGroup in app2-labels.js)
@@ -2264,14 +2326,15 @@ function uiInScope(a) { return !ISO.length || ISO.some(r => isUnder(a, r)); }
 // een open opener (de ouder zelf of een broer) legt de ingesloten delen van die ouder bloot
 const uiOpenNear = (p, fin) => (fin ? p.ot : p.ou) > 0 || p.kids.some(k => k.opn && (fin ? (k.opn.lead ? k.opn.lead.ot : k.ot) : k.ou) > 0);
 // fin: in de eindstand (na alle lopende animaties; voor camera en kaders), anders de stand van nu (golf 5c-2, K3: was ook uiPredHidden)
-function uiInnerHidden(n, fin = false) { const p = n.parent; return !!(n.inner && p && p.target === 0 && (fin || p.amt < 1e-4) && uiInScope(p) && !uiOpenNear(p, fin)); }
+// in de cockpit zie je de cabine van binnen: de ingesloten knopen onder AUTO.cockpit.binnen (uiCkShow) blijven dan zichtbaar
+function uiInnerHidden(n, fin = false) { const p = n.parent; return !!(n.inner && p && p.target === 0 && (fin || p.amt < 1e-4) && uiInScope(p) && !uiOpenNear(p, fin) && !(uiCkShow && uiCkShow.has(n))); }
 function applyVisibility() {
   const onPath = new Set();
   for (const r of ISO) for (let a = r.parent; a; a = a.parent) onPath.add(a);
   uiPickable.length = 0;
   (function walk(n, inside, pv) {
     const ins = inside || !ISO.length || ISO.includes(n);
-    const own = (ins || onPath.has(n)) && !uiInnerHidden(n) && !(n.hideN && n.hideN.some(m => m.ot > 0));
+    const own = (ins || onPath.has(n)) && !uiInnerHidden(n) && !(n.hideN && n.hideN.some(m => m.ot > 0)) && !(uiCkHide && uiCkHide.has(n));
     n.obj.visible = own; n.vis = own; n.ev = pv && own;
     if (!n.asm) { if (n.ev && ins) uiPickable.push(n.obj); return; }
     for (const k of n.kids) walk(k, ins, n.ev);
@@ -2496,6 +2559,7 @@ function uiFitPoints(pts, dir, pad = 1.08, opt = {}) {
 }
 const uiSph0 = new THREE.Spherical(), uiSph1 = new THREE.Spherical();
 function animCam(pos, target, dur, delay = 0) {
+  if (uiCamHeld()) return; // de cockpit houdt de camera vast
   dur = REDUCED ? 0.01 : (dur || 0.95);
   camAnim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), t: 0, dur, delay: REDUCED ? 0 : delay, started: false };
   uiUserCam = false; uiWake();
@@ -2525,6 +2589,7 @@ let uiLastFit = null;
 // (layoutView en uiRefitNow in app2-loop.js zetten ze; uiSnap en uiRestore bewaren ze)
 let uiFitRef = null, uiFitFree = -1;
 function focusNodes(nodes, dir, pad, opt = {}) {
+  if (uiCamHeld()) return; // in de cockpit kadreert niets: het kader van voor de cockpit (uiLastFit) blijft staan
   const pts = uiCollect(nodes, true);
   if (!pts.length) uiCollect(nodes.map(() => ROOT), true, pts);
   const f = uiFitPoints(pts, dir, pad || 1.08, opt);
@@ -2613,7 +2678,7 @@ function stepGround(dt) {
 /* ---------- stap terug (geschiedenis) ---------- */
 const uiHist = [];
 function uiSnap() {
-  return {
+  const s = {
     t: ASMS.map(n => n.target), o: OPENERS.map(n => n.ot),
     pull: ALL.filter(n => n.pull.lengthSq() > 0).map(n => [n.id, n.pull.x, n.pull.y, n.pull.z]),
     lift: uiLifted ? uiLifted.id : null,
@@ -2623,6 +2688,9 @@ function uiSnap() {
     // G1: het kader waarop deze camera is ingepast, het vrije beeld daarvan en of de gebruiker de camera zelf had verplaatst
     fit: uiLastFit, ffree: uiLastFit === uiFitRef ? uiFitFree : H - VIEW.t - VIEW.b, user: uiUserCam,
   };
+  // in de cockpit (of tijdens de overgang) de camera van voor de cockpit: stap terug na het uitstappen zet nooit een oog in de auto
+  if (uiCkSave) Object.assign(s, { cam: [uiCkSave.pos.clone(), uiCkSave.target.clone()], fit: uiCkSave.lastFit, ffree: uiCkSave.fitFree, user: uiCkSave.user });
+  return s;
 }
 function uiPush() {
   uiHist.push(uiSnap());
@@ -2698,7 +2766,7 @@ function uiBatchClean() {
     const n = ALL[i];
     if (!n.asm) { n._bc = !uiSelSet.has(n.obj) && !uiHovSet.has(n.obj); continue; }
     let c = n.target === 0 && n.amt === 0 && !uiAnim.has(n) && !(n.strut && n.strut.dirty);
-    if (c) for (const k of n.kids) { if (k.inner) continue; if (!k._bc || k.hasOff || k.ou > 0 || (k.strut && k.strut.dirty) || (k.stayO && k.stayO.ou > 0)) { c = false; break; } }
+    if (c) for (const k of n.kids) { if (k.inner) continue; if (!k._bc || (uiCkHide && uiCkHide.has(k)) || k.hasOff || k.ou > 0 || (k.strut && k.strut.dirty) || (k.stayO && k.stayO.ou > 0)) { c = false; break; } }
     n._bc = c;
   }
 }
@@ -3188,7 +3256,14 @@ const UI_MODES = {
     uitklap: false, dubbel: false, dim: false, tint: n => !n.opn,
   },
 };
-const uiMode = () => (OPENMODE ? UI_MODES.open : UI_MODES[MODE] || UI_MODES.part); // een onbekende klikmodus (testhaak setMode) werkt als Onderdeel
+// Cockpit (golf 5l): klikken zoals in Openen (een opener gaat open of dicht en de kaart toont hem), maar de camera blijft op de
+// stoel: kiezen in de lijst of het paneel selecteert alleen, en een dubbelklik zet de blik terug (dubbelAct, uiCkReset).
+UI_MODES.cockpit = Object.assign({}, UI_MODES.open, {
+  reveal: n => { uiPush(); select(n); uiAfterAction(); },
+  desc: n => (n === ROOT && COCKPIT ? TXT.ckUitleg(COCKPIT.label) : (n.d || '')),
+  dubbelAct: () => uiCkReset(),
+});
+const uiMode = () => (COCKPIT ? UI_MODES.cockpit : OPENMODE ? UI_MODES.open : UI_MODES[MODE] || UI_MODES.part); // een onbekende klikmodus (testhaak setMode) werkt als Onderdeel
 
 /* ---------- onderdeelnummers ---------- */
 // Gegevens uit PN_DATA (src/partnumbers.js). map: pad zonder wortel -> [eenheid, 'zelf' | 'deel' | 'set', regel].
@@ -3380,7 +3455,7 @@ function select(n, opts = {}) {
 let uiPanelKey = '';
 function renderPanel() {
   const n = SEL || ROOT;
-  const key = n.id + '|' + (OPENMODE ? 1 : 0) + '|' + uiPnGen;
+  const key = n.id + '|' + (COCKPIT ? 'c' + COCKPIT.id : OPENMODE ? 1 : 0) + '|' + uiPnGen;
   if (key !== uiPanelKey) { uiPanelKey = key; uiPanelFixed(n); }
   // U6: de live regions (#selName, #selMeta) alleen beschrijven als er iets verandert; een schermlezer leest anders elke
   // herhaalde opbouw van het paneel voor (bij elke handeling twee tot drie keer)
@@ -3400,6 +3475,7 @@ function renderPanel() {
   els.dim.hidden = !DIM || !m.uitklap;
   if (DIM) els.dim.title = TXT.dimTitel(DIM.name);
   els.up.hidden = !m.uitklap; els.iso.hidden = !m.uitklap;
+  els.focus.hidden = !!COCKPIT; // in de cockpit blijft de camera op de stoel
   els.up.disabled = !uiClosedAbove(n);
   els.up.title = els.up.disabled ? TXT.omhoogVol : TXT.omhoogTitel;
   const isoOn = ISO.length === 1 && ISO[0] === n;
@@ -3744,6 +3820,7 @@ function uiOpenAllTo(v) {
 }
 function uiSetOpenMode(on) {
   on = !!on;
+  if (COCKPIT) uiCkExit(); // Uitklappen of Openen kiezen stapt eerst uit de cockpit
   if (on === OPENMODE) return;
   uiStopPlay(); uiStopTour();
   uiPush();
@@ -3755,10 +3832,228 @@ function uiSetOpenMode(on) {
   uiUiChanged();
   uiAfterAction();
 }
-const uiOpenBtns = [...document.querySelectorAll('#openSeg [data-omode]')];
+
+/* ---------- cockpit: rondkijken vanaf een zitplaats (golf 5l) ---------- */
+// AUTO.cockpit is optioneel (auto.json): { stoelen: [{ id, label, knoop, oog: [x, y, z], kijk: [yaw, pitch], verberg: [knopen] }],
+// binnen: [groepen] }.
+// Het veld wordt met haken gelezen: tools/framework.py eist elk veld dat als AUTO-punt-naam in de generieke laag staat, en een auto
+// zonder cockpit toont gewoon geen knop Cockpit. Hoeken in graden: yaw 0 is recht vooruit (+z), positief naar links (+x); pitch
+// positief omhoog. Het oog beweegt binnen de doos uit CFG.cockpit rond de zitplaats (uiCk.off, in het autoframe).
+// Ingang: alles gemonteerd (preset assembled met keepOpen: openers blijven), geen isolatie, dimmen of röntgen; de ingesloten
+// delen onder AUTO.cockpit.binnen worden getekend (uiCkShow, app1.js). In de cockpit geldt needs niet (uiSetOpen, app1.js): het
+// dashboardkastje gaat open zonder eerst een portier. Uitgang: camera, doel, gezichtsveld en near/far exact terug.
+const UI_CK = (() => { const c = AUTO['cockpit']; return c && Array.isArray(c.stoelen) && c.stoelen.length ? c : null; })();
+const uiCkSeats = UI_CK ? UI_CK.stoelen : [];
+const uiCk = { yaw: 0, pitch: 0, fov: CFG.cockpit.fov, off: V3(0, 0, 0), last: uiCkSeats.length ? uiCkSeats[0].id : null };
+const uiCkV = V3(0, 0, 0), uiCkV2 = V3(0, 0, 0), uiCkM = new THREE.Matrix4(), uiCkUp = V3(0, 1, 0), UI_D2R = PI / 180;
+function uiCkSeat(id) { return uiCkSeats.find(st => st.id === id) || null; }
+// kijkrichting (eenheidsvector) uit yaw en pitch in graden
+function uiCkDir(yaw, pitch, out) { const y = yaw * UI_D2R, p = pitch * UI_D2R; return out.set(Math.sin(y) * Math.cos(p), Math.sin(p), Math.cos(y) * Math.cos(p)); }
+// de camerastand van de cockpit: het oog (zitplaats plus verschuiving) en de oriëntatie naar de kijkrichting
+function uiCkPose(pos, quat) {
+  pos.set(...COCKPIT.oog).add(uiCk.off);
+  uiCkDir(uiCk.yaw, uiCk.pitch, uiCkV2).add(pos);
+  quat.setFromRotationMatrix(uiCkM.lookAt(pos, uiCkV2, uiCkUp));
+}
+// het gezichtsveld geldt voor de korte kant van het beeld: liggend verticaal, staand (telefoon) horizontaal; camera.fov is verticaal
+function uiCkVfov() {
+  const a = camera.aspect, f = uiCk.fov;
+  return a >= 1 ? f : Math.min(CFG.cockpit.vfovMax, 2 * Math.atan(Math.tan(f * UI_D2R / 2) / a) / UI_D2R);
+}
+function uiCkApply() {
+  if (!COCKPIT || uiCkAnim) return;
+  uiCkPose(camera.position, camera.quaternion);
+  controls.target.copy(uiCkDir(uiCk.yaw, uiCk.pitch, uiCkV)).add(camera.position); // het doel een meter voor het oog
+  const vf = uiCkVfov();
+  if (camera.fov !== vf) { camera.fov = vf; camera.updateProjectionMatrix(); }
+  // omkijken: de eigen hoofdsteun en rugleuning zouden het beeld vullen; die verdwijnen voorbij CFG.cockpit.verbergYaw
+  const hide = Math.abs(uiCk.yaw) > CFG.cockpit.verbergYaw ? uiCkHideOf(COCKPIT) : null;
+  if (hide !== uiCkHide) { uiCkHide = hide; applyVisibility(); }
+  camera.updateMatrixWorld();
+  requestRender();
+}
+function uiCkClamp() {
+  const c = CFG.cockpit;
+  uiCk.yaw = clamp(uiCk.yaw, -c.yawMax, c.yawMax); uiCk.pitch = clamp(uiCk.pitch, c.pitchMin, c.pitchMax);
+  uiCk.off.set(clamp(uiCk.off.x, -c.opzij, c.opzij), clamp(uiCk.off.y, -c.omlaag, c.omhoog), clamp(uiCk.off.z, -c.achter, c.voor));
+  uiCk.fov = clamp(uiCk.fov, c.fovMin, c.fovMax);
+}
+function uiCkLook(yaw, pitch) { uiCk.yaw = +yaw || 0; uiCk.pitch = +pitch || 0; uiCkClamp(); uiCkApply(); }
+// hoofd draaien met dx, dy pixels: de scène volgt de vinger (zoals een panoramafoto), een volle schermhoogte is het gezichtsveld
+function uiCkTurn(dx, dy) { const k = camera.fov / Math.max(1, H); uiCkLook(uiCk.yaw + dx * k, uiCk.pitch + dy * k); }
+// vooroverbuigen en opzij, in meter: right naar rechts en fwd vooruit in de kijkrichting (horizontaal), up omhoog
+function uiCkShift(right, fwd, up) {
+  const y = uiCk.yaw * UI_D2R;
+  uiCk.off.x += -Math.cos(y) * right + Math.sin(y) * fwd;
+  uiCk.off.z += Math.sin(y) * right + Math.cos(y) * fwd;
+  uiCk.off.y += up;
+  uiCkClamp(); uiCkApply();
+}
+function uiCkZoom(f) { uiCk.fov *= f; uiCkClamp(); uiCkApply(); }
+// dubbelklik en C: de blik terug naar de standaard van de zitplaats, het hoofd terug op zijn plaats (het gezichtsveld blijft)
+function uiCkReset() { if (!COCKPIT) return; uiCk.off.set(0, 0, 0); const k = COCKPIT.kijk || [0, 0]; uiCkLook(k[0], k[1]); }
+// de delen uit verberg van een zitplaats (pad of unieke naam), één keer per zitplaats opgezocht
+const uiCkHideSets = new Map();
+function uiCkHideOf(seat) {
+  let set = uiCkHideSets.get(seat);
+  if (!set) {
+    set = new Set();
+    for (const ref of seat.verberg || []) { const n = uiResolve(ref); if (n) set.add(n); else console.error('cockpit: verberg ' + JSON.stringify(ref) + ' van ' + seat.id + ' lost niet op'); }
+    uiCkHideSets.set(seat, set);
+  }
+  return set.size ? set : null;
+}
+// Buitenwereld van de cockpit: een luchtkoepel en een grondvlak met kleurverlopen (CFG.cockpit.wereld, per thema), lui gebouwd en
+// alleen zichtbaar zolang de cockpit aanstaat. Daarbuiten blijven de achtergrond van de pagina en het raster (ground) zoals ze waren.
+// Vlak getekend (geen licht, geen toonafbeelding): de kleuren zijn wat er staat. De vertexkleuren zijn lineair, Color.setHex rekent om.
+let uiCkWorld = null;
+function uiCkWorldMake() {
+  const R = CFG.cockpit.wereldR, g = new THREE.Group(); g.name = 'uiCockpitWereld'; g.visible = false;
+  const mat = side => new THREE.MeshBasicMaterial({ vertexColors: true, side, toneMapped: false, depthWrite: false });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(R, 32, 16), mat(THREE.BackSide)); sky.renderOrder = -4;
+  const gr = new THREE.Mesh(new THREE.RingGeometry(0.01, R * 0.98, 48, 12), mat(THREE.FrontSide)); gr.rotation.x = -HALF; gr.renderOrder = -3;
+  for (const m of [sky, gr]) m.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(m.geometry.attributes.position.count * 3), 3));
+  g.add(sky, gr); scene.add(g);
+  return (uiCkWorld = { g, sky, gr });
+}
+function uiCkWorldColors(dark) {
+  const w = uiCkWorld; if (!w) return;
+  const c = CFG.cockpit.wereld[dark ? 'donker' : 'licht'], R = CFG.cockpit.wereldR, A = new THREE.Color(), B = new THREE.Color(), C = new THREE.Color();
+  const fill = (mesh, f) => { const p = mesh.geometry.attributes.position, col = mesh.geometry.attributes.color; for (let i = 0; i < p.count; i++) { f(p.getX(i), p.getY(i), p.getZ(i), C); col.setXYZ(i, C.r, C.g, C.b); } col.needsUpdate = true; };
+  // lucht: van de horizon naar het zenit (wortel: het licht blijft lang aan de horizon); onder de horizon de verre grond
+  fill(w.sky, (x, y, z, out) => { const t = y / R; if (t >= 0) out.copy(A.setHex(c.horizon)).lerp(B.setHex(c.zenit), Math.sqrt(t)); else out.setHex(c.grondVer); });
+  // grond (RingGeometry ligt in x, y voor het draaien): bij de auto vlak grijs, vanaf een kwart van de straal naar de vage horizon
+  fill(w.gr, (x, y, z, out) => { const t = clamp((Math.hypot(x, y) / R - 0.12) / 0.88, 0, 1); out.copy(A.setHex(c.grond)).lerp(B.setHex(c.grondVer), Math.pow(t, 0.6)); });
+}
+// lichtstand van de cockpit (vanuit uiThemeLights in core.js, dat eerst de lichten van het thema zet): zon lager en zachter,
+// meer hemellicht, het cabinelicht aan; de kleuren van de buitenwereld volgen het thema
+function uiCkLights(dark) {
+  const L = CFG.cockpit.licht;
+  sun.intensity = L.zon; sun.position.set(...L.zonPos);
+  uiHemi.intensity += L.hemiPlus;
+  uiCabin.intensity = dark ? L.cabineDonker : L.cabine;
+  uiCkWorldColors(dark);
+}
+// cockpit aan of uit voor de omgeving: buitenwereld, raster en lichten
+function uiCkEnv(on) {
+  if (on && !uiCkWorld) uiCkWorldMake();
+  if (uiCkWorld) uiCkWorld.g.visible = on;
+  ground.visible = !on;
+  if (on) uiCabin.position.set(...(UI_CK.licht || [0, 1, 0]));
+  uiCkLightOn = on; uiThemeLights();
+  requestRender();
+}
+// Uitstappen: een opener die alleen van binnen open kon (needs dicht, zoals het dashboardkastje achter een dicht portier) gaat
+// weer dicht, zodat buiten de regel van needs weer klopt; al het andere blijft zoals het in de cockpit stond
+function uiCkCloseInside(instant) {
+  for (let more = true; more;) {
+    more = false;
+    for (const n of OPENERS) if (n.ot > 0 && n.opn.needN && n.opn.needN.ot === 0) { uiSetOpen(n, 0, instant); more = true; }
+  }
+}
+// de ingesloten knopen die in de cockpit zichtbaar zijn: alles met inner onder de groepen van AUTO.cockpit.binnen
+function uiCkInner() {
+  const set = new Set();
+  for (const ref of UI_CK.binnen || []) {
+    const g = uiResolve(ref);
+    if (!g) { console.error('cockpit: groep ' + JSON.stringify(ref) + ' uit auto.json lost niet op'); continue; }
+    for (const n of subtree(g)) if (n.inner) set.add(n);
+  }
+  return set;
+}
+// overgang van de huidige camerastand naar p1, q1, f1 (exit: terug naar de camera van voor de cockpit); bij minder beweging direct
+function uiCkStart(p1, q1, f1, exit, instant) {
+  const dur = REDUCED || instant ? 0 : CFG.cockpit.overgangS;
+  uiCkAnim = { p0: camera.position.clone(), q0: camera.quaternion.clone(), f0: camera.fov, p1, q1, f1, t: 0, dur, exit };
+  if (!dur) uiCkAnimEnd(); else uiWake();
+}
+function uiStepCk(dt) {
+  const a = uiCkAnim; if (!a) return false;
+  a.t = Math.min(1, a.t + dt / a.dur);
+  const k = ease(a.t);
+  camera.position.lerpVectors(a.p0, a.p1, k); camera.quaternion.slerpQuaternions(a.q0, a.q1, k);
+  camera.fov = lerp(a.f0, a.f1, k); camera.updateProjectionMatrix();
+  if (a.t >= 1) uiCkAnimEnd();
+  return true;
+}
+function uiCkAnimEnd() {
+  const a = uiCkAnim; if (!a) return;
+  uiCkAnim = null;
+  if (a.exit) uiCkRestore(); else uiCkApply();
+}
+// de camera van voor de cockpit exact terug, met het kader en de gebruikerscamera (geen herkadrering na het uitstappen)
+function uiCkRestore() {
+  const sv = uiCkSave; if (!sv) return;
+  camera.position.copy(sv.pos); camera.quaternion.copy(sv.quat); controls.target.copy(sv.target);
+  camera.fov = sv.fov; camera.near = sv.near; camera.far = sv.far; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  // het kader van voor de cockpit hoort bij deze camera en bij het vrije beeld van nu (het dock is bij het uitstappen al
+  // terug): zo herkadreert de wachtende layoutwijziging niet, en een latere formaatwissel wel
+  uiLastFit = sv.lastFit; uiFitRef = sv.lastFit; uiFitFree = H - VIEW.t - VIEW.b; uiUserCam = sv.user;
+  uiCkSave = null; controls.enabled = true;
+  requestRender();
+}
+// instappen op zitplaats id (of overstappen); null stapt uit. opt.instant: zonder overgang (adresbalk, testhaak)
+function uiSetCockpit(id, opt = {}) {
+  if (id == null || id === false) return uiCkExit(opt.instant);
+  const seat = UI_CK && uiCkSeat(String(id));
+  if (!seat) return false;
+  uiStopPlay(); uiStopTour(); hideHint(); uiCloseMenu(false);
+  const first = !COCKPIT;
+  if (first) {
+    uiPush();
+    if (!uiCkSave) { // (tijdens de overgang terug staat de oude camera er nog)
+      // loopt er een camera-animatie, dan telt haar eindstand
+      const pos = camAnim ? camAnim.p1.clone() : camera.position.clone(), target = camAnim ? camAnim.t1.clone() : controls.target.clone();
+      const quat = camAnim ? new THREE.Quaternion().setFromRotationMatrix(uiCkM.lookAt(pos, target, camera.up)) : camera.quaternion.clone();
+      uiCkSave = { pos, target, quat, fov: camera.fov, near: camera.near, far: camera.far, lastFit: uiLastFit, fitFree: uiLastFit === uiFitRef ? uiFitFree : H - VIEW.t - VIEW.b, user: uiUserCam };
+    }
+    camAnim = null; controls.enabled = false;
+    uiCk.fov = CFG.cockpit.fov;
+  }
+  if (!uiCkShow) uiCkShow = uiCkInner();
+  COCKPIT = seat; uiCk.last = seat.id;
+  if (first) uiCkEnv(true);
+  uiCk.off.set(0, 0, 0); const k = seat.kijk || [0, 0]; uiCk.yaw = k[0]; uiCk.pitch = k[1]; uiCkClamp();
+  camera.near = CFG.cockpit.near; camera.far = CFG.cockpit.far; camera.updateProjectionMatrix();
+  // alles gemonteerd en zonder isolatie, dimmen of röntgen; de openers en de klikmodus blijven (de camera staat al vast)
+  if (first) appApplyPreset(appPresetById.get('assembled'), { noHistory: true, openMode: OPENMODE, keepOpen: true });
+  else { uiVisDirty = true; }
+  const p1 = V3(0, 0, 0), q1 = new THREE.Quaternion(); uiCkPose(p1, q1);
+  uiCkStart(p1, q1, uiCkVfov(), false, opt.instant);
+  uiAfterAction();
+  return true;
+}
+function uiCkExit(instant) {
+  if (!COCKPIT) return false;
+  uiStopTour(); hideHint();
+  COCKPIT = null; uiCkShow = null; uiCkHide = null; applyVisibility();
+  uiCkEnv(false); uiCkCloseInside(instant);
+  const sv = uiCkSave;
+  if (sv) uiCkStart(sv.pos.clone(), sv.quat.clone(), sv.fov, true, instant); else uiCkAnim = null;
+  uiAfterAction();
+  return true;
+}
+function uiCkState() {
+  if (!COCKPIT) return null;
+  const r = v => +v.toFixed(4);
+  return { seat: COCKPIT.id, label: COCKPIT.label, yaw: r(uiCk.yaw), pitch: r(uiCk.pitch), fov: r(uiCk.fov), off: uiCk.off.toArray().map(r), eye: V3(...COCKPIT.oog).add(uiCk.off).toArray().map(r), moving: !!uiCkAnim };
+}
+// keuzelijst van de zitplaatsen (in het dock op de plek van de explosieschuif) en de knop Uitstappen
+const uiCkSel = $('ckSeat');
+for (const st of uiCkSeats) { const o = document.createElement('option'); o.value = st.id; o.textContent = st.label; uiCkSel.appendChild(o); }
+uiCkSel.addEventListener('change', () => { hideHint(); uiSetCockpit(uiCkSel.value); });
+$('btnCkOut').onclick = () => uiCkExit();
+// zonder cockpit in auto.json: geen knop, geen uitleg in de hulp
+if (!UI_CK) { const b = document.querySelector('#openSeg [data-ckmode]'); if (b) b.remove(); $('openSeg').setAttribute('aria-label', TXT.segZonderCockpit); }
+document.querySelectorAll('.ckhelp').forEach(e => { e.hidden = !UI_CK; });
+// De segmentknop bovenin is één radiogroep: Uitklappen, Openen en Cockpit. De knop Cockpit heeft een eigen attribuut
+// (data-ckmode): data-omode blijft de klikstand van Uitklappen of Openen, zoals de tests en de adresbalk die kennen.
+const uiOpenBtns = [...document.querySelectorAll('#openSeg [role="radio"]')];
+const uiViewModeOf = b => (b.dataset.ckmode ? 'cockpit' : b.dataset.omode);
+function uiSetViewMode(m) { if (m === 'cockpit') uiSetCockpit(COCKPIT ? COCKPIT.id : uiCk.last); else uiSetOpenMode(m === 'open'); }
 uiOpenBtns.forEach((b, i) => {
-  b.addEventListener('click', () => { hideHint(); uiSetOpenMode(b.dataset.omode === 'open'); });
-  b.addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : uiOpenBtns.length - 1)) % uiOpenBtns.length; uiSetOpenMode(uiOpenBtns[j].dataset.omode === 'open'); uiOpenBtns[j].focus(); e.preventDefault(); });
+  b.addEventListener('click', () => { hideHint(); uiSetViewMode(uiViewModeOf(b)); });
+  b.addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : uiOpenBtns.length - 1)) % uiOpenBtns.length; uiSetViewMode(uiViewModeOf(uiOpenBtns[j])); uiOpenBtns[j].focus(); e.preventDefault(); });
 });
 $('btnOpenAll').onclick = () => uiOpenAllTo(true);
 $('btnCloseAll').onclick = () => uiOpenAllTo(false);
@@ -3783,18 +4078,21 @@ function uiCloseOpenList() {
   if (!uiOpenListOn || !uiNarrow()) return;
   uiOpenListOn = false; $('btnOpenList').setAttribute('aria-expanded', 'false'); uiSyncOpenUi(); uiUiChanged(); layoutView();
 }
-let uiOpenWas = false;
+let uiOpenWas = 'expand';
 function uiSyncOpenUi() {
   uiUrlSync(); // de adresbalk volgt de openstand (ook via de testhaken setOpen en openAll)
-  $('app').classList.toggle('omode', OPENMODE);
-  uiOpenBtns.forEach(b => { const on = (b.dataset.omode === 'open') === OPENMODE; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  $('app').classList.toggle('omode', OPENMODE && !COCKPIT);
+  $('app').classList.toggle('ckmode', !!COCKPIT);
+  const cur = COCKPIT ? 'cockpit' : OPENMODE ? 'open' : 'expand';
+  uiOpenBtns.forEach(b => { const on = uiViewModeOf(b) === cur; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  if (UI_CK) { const v = COCKPIT ? COCKPIT.id : uiCk.last; if (uiCkSel.value !== v) uiCkSel.value = v; }
   let open = 0;
   for (const [n, b] of uiOpenChips) { const on = n.ot > 0; if (on) open++; if (b.getAttribute('aria-pressed') !== String(on)) b.setAttribute('aria-pressed', String(on)); }
   const txt = open + '/' + OPENERS.length;
   if ($('openCount').textContent !== txt) $('openCount').textContent = txt;
-  const showList = OPENMODE && uiOpenListOn;
+  const showList = OPENMODE && !COCKPIT && uiOpenListOn;
   if ($('openList').hidden === showList) $('openList').hidden = !showList;
-  if (uiOpenWas !== OPENMODE) { uiOpenWas = OPENMODE; uiUiChanged(); layoutView(); }
+  if (uiOpenWas !== cur) { uiOpenWas = cur; uiUiChanged(); layoutView(); }
 }
 
 /* ---------- weergave-bediening ---------- */
@@ -4118,7 +4416,7 @@ const uiAnchor = V3(0, 0, 0), uiGc = V3(0, 0, 0);
 // uitgeklapt is. vooruit (uiAnchorPrefetch): al zodra de groep opengaat, en zonder de vaste labelgroep van een preset.
 // Golf 5c-2, K3: de ankerrij had een eigen kopie van deze keuze.
 function uiLabelGroup(vooruit = false) {
-  if (!LABELS) return null;
+  if (!LABELS || COCKPIT) return null; // in de cockpit geen labels
   if (!vooruit && uiLabelForce && CTX) return CTX;
   const ok = g => g && uiOpen(g) && (vooruit || g.amt > 0.6);
   if (SEL && SEL.asm && ok(SEL)) return SEL;
@@ -4286,7 +4584,7 @@ function updateLabels() {
   const g = uiLabelGroup();
   const max = W < CFG.indeling.smal ? CFG.indeling.labelsSmal : CFG.indeling.labels;
   uiCands.length = 0;
-  if (SEL && !SEL.asm && SEL.ev && LABELS) uiCands.push(SEL);
+  if (SEL && !SEL.asm && SEL.ev && LABELS && !COCKPIT) uiCands.push(SEL);
   const lp = uiLabelForce && ACTIVE_PRESET ? appPresetById.get(ACTIVE_PRESET) : null;
   const only = lp && lp.labelOnly && g && g.name === lp.labels ? lp.labelOnly : null;
   let eligible = 0; // U2: alle kinderen die een label zouden kunnen krijgen, ook voorbij het maximum
@@ -4533,7 +4831,9 @@ canvas.addEventListener('pointerup', e => {
   const now = e.timeStamp, L = uiLastTap;
   if (L && now - L.t < CFG.gebaar.dubbelMs && now - L.t >= 0 && Math.hypot(e.clientX - L.x, e.clientY - L.y) < CFG.gebaar.dubbelPx && L.type === d.type) {
     uiLastTap = null;
-    if (!uiMode().dubbel) return; // in Openen is dubbelklik gelijk aan een enkele klik
+    const md = uiMode();
+    if (md.dubbelAct) { md.dubbelAct(L.pick); return; } // cockpit: dubbelklik zet de blik terug
+    if (!md.dubbel) return; // in Openen is dubbelklik gelijk aan een enkele klik
     if (L.pick) uiDive(L.pick); // altijd het onderdeel van de eerste tik
     return;
   }
@@ -4553,6 +4853,38 @@ canvas.addEventListener('contextmenu', e => e.preventDefault()); // rechtsklik z
 // click op label Koplampsproeiers). touchend afvangen onderdrukt die nagekomen click.
 canvas.addEventListener('touchend', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 canvas.addEventListener('wheel', () => { uiStopPlay(); uiStopTour(); hideHint(); uiHideTip(); }, { passive: true });
+
+/* ---------- cockpit: hoofd draaien, vooroverbuigen en zoomen (golf 5l; de orbitbediening staat dan uit) ---------- */
+// Slepen (muis, één vinger) draait het hoofd; rechts slepen of Shift+slepen buigt voorover of opzij; twee vingers schuiven en
+// knijpen (gezichtsveld); scrollen zoomt. Een tik of klik zonder slepen blijft een klik (pointerup hierboven). Muis en vinger
+// houden het slepen vast (pointer capture), ook buiten het canvas.
+const uiCkPtrs = new Map();
+const uiCkSpan = () => { const [a, b] = [...uiCkPtrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+canvas.addEventListener('pointerdown', e => {
+  if (!COCKPIT) return;
+  uiCkPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) { }
+});
+canvas.addEventListener('pointermove', e => {
+  const p = uiCkPtrs.get(e.pointerId);
+  if (!p || !COCKPIT) return;
+  const two = uiCkPtrs.size >= 2, d0 = two ? uiCkSpan() : 0;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (!dx && !dy) return;
+  const k = CFG.cockpit.schuifMPx;
+  if (two) { const d1 = uiCkSpan(); if (d0 > 1 && d1 > 1) uiCk.fov *= d0 / d1; uiCkShift(dx / 2 * k, -dy / 2 * k, 0); } // het midden van de vingers schuift half zo ver
+  else if ((e.buttons & 2) || e.shiftKey) uiCkShift(dx * k, -dy * k, 0);
+  else uiCkTurn(dx, dy);
+  uiHideTip();
+});
+const uiCkPtrEnd = e => { uiCkPtrs.delete(e.pointerId); };
+canvas.addEventListener('pointerup', uiCkPtrEnd);
+canvas.addEventListener('pointercancel', uiCkPtrEnd);
+canvas.addEventListener('wheel', e => {
+  if (!COCKPIT || e.ctrlKey) return;
+  e.preventDefault();
+  uiCkZoom(Math.exp(clamp(e.deltaY, -200, 200) * CFG.cockpit.zoomWiel));
+}, { passive: false });
 
 /* ---------- hint en hulp ---------- */
 const uiHintKey = AUTO.id + '-hint-' + AUTO.hintVersie;
@@ -4631,11 +4963,21 @@ window.addEventListener('keydown', e => {
   const onCtl = !!(t && t.closest && t.closest('button, a, input, select, summary'));
   // U6: Esc sluit eerst het mobiele paneel (de lade), daarna pas de rest
   if (e.key === 'Escape' && uiSheetBottom() && els.sheet.dataset.state === 'open') { e.preventDefault(); setSheet('peek'); return; }
+  if (e.key === 'Escape' && COCKPIT) { e.preventDefault(); hideHint(); uiCkExit(); return; } // Esc stapt uit de cockpit
   if (e.key === 'Escape') { uiStopPlay(); uiStopTour(); hideHint(); uiBackground(); return; }
   if (e.key === 'Enter') { if (onCtl) return; e.preventDefault(); uiStopPlay(); uiStopTour(); hideHint(); uiEnter(e.shiftKey); return; }
-  if (e.key === 'Backspace') { e.preventDefault(); uiStopPlay(); uiStopTour(); uiUndo(); return; }
+  if (e.key === 'Backspace') { e.preventDefault(); if (COCKPIT) return; uiStopPlay(); uiStopTour(); uiUndo(); return; } // in de cockpit geen stap terug: die zou uitklappen terwijl je in de auto zit
   if (e.key === '?') { e.preventDefault(); uiHelp(true); return; }
-  if (e.key === 'o' || e.key === 'O') { e.preventDefault(); hideHint(); uiSetOpenMode(!OPENMODE); return; }
+  if (e.key === 'o' || e.key === 'O') { e.preventDefault(); hideHint(); uiSetOpenMode(!OPENMODE); return; } // vanuit de cockpit: uitstappen en wisselen
+  // K: cockpit aan of uit (alleen als de auto een cockpit heeft)
+  if ((e.key === 'k' || e.key === 'K') && UI_CK) { e.preventDefault(); hideHint(); COCKPIT ? uiCkExit() : uiSetCockpit(uiCk.last); return; }
+  // in de cockpit: pijltjes en W/S buigen voorover, opzij en omhoog; C zet de blik terug; cijfers (presets) doen niets
+  if (COCKPIT) {
+    const st = CFG.cockpit.stapM, mv = { ArrowLeft: [-st, 0, 0], ArrowRight: [st, 0, 0], ArrowUp: [0, st, 0], ArrowDown: [0, -st, 0], w: [0, 0, st], W: [0, 0, st], s: [0, 0, -st], S: [0, 0, -st] }[e.key];
+    if (mv && !(onCtl && /^Arrow/.test(e.key))) { e.preventDefault(); hideHint(); uiCkShift(...mv); return; }
+    if (e.key === 'c' || e.key === 'C') { e.preventDefault(); hideHint(); uiCkReset(); return; }
+    if (/^[0-9]$/.test(e.key)) return;
+  }
   // U17: / springt naar het zoekveld van de onderdelenlijst (op de telefoon gaat het paneel daarvoor open)
   if (e.key === '/') { e.preventDefault(); hideHint(); showTab('tree'); if (uiSheetBottom()) setSheet('open'); els.search.focus(); els.search.select(); return; }
   // pijltjes (niet op een bedieningselement): door de boom lopen. Omhoog = bovenliggende groep, omlaag = eerste deel,
@@ -4670,7 +5012,7 @@ function layoutView() {
   const acts = els.topbar.querySelector('.top-actions').getBoundingClientRect();
   const sheet = els.sheet.getBoundingClientRect();
   let dockTop = H;
-  for (const el of [$('modes'), $('xctl'), els.presets, $('openCtl'), $('openList'), els.isoBadge]) { const r = el.getBoundingClientRect(); if (r.height > 0 && r.top < dockTop) dockTop = r.top; }
+  for (const el of [$('modes'), $('xctl'), els.presets, $('openCtl'), $('openList'), els.isoBadge, $('ckCtl')]) { const r = el.getBoundingClientRect(); if (r.height > 0 && r.top < dockTop) dockTop = r.top; }
   if (wide) {
     VIEW.l = 0; VIEW.r = Math.max(0, W - sheet.left + 8);
     VIEW.t = Math.min(H * 0.3, title.bottom + 6);
@@ -4712,7 +5054,7 @@ function uiFitStale() { return uiLastFit === uiFitRef && uiFitFree >= 0 && Math.
 function uiRefitNow() {
   const check = uiRefitCheck;
   clearTimeout(uiRefitTimer); uiRefitTimer = 0; uiRefitCheck = false;
-  if (uiUserCam || !uiLastFit) return;
+  if (uiUserCam || !uiLastFit || uiCamHeld()) return; // de cockpit houdt de camera vast
   if (check && !uiFitStale()) return; // alleen een layoutwijziging als aanleiding: niet herkadreren als de camera al op dit vrije beeld past
   const f = uiLastFit;
   if (f.preset) { const c = f.preset.cam || {}; focusNodes(appSubject(f.preset), appPresetDir(f.preset), c.pad || 1.06, { dur: 0.4 }); uiLastFit = f; }
@@ -4732,6 +5074,7 @@ function resize() {
   uiDpr = uiPickDpr(false); uiBufferSize();
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
+  if (COCKPIT) uiCkApply(); // het gezichtsveld van de cockpit hangt van de beeldverhouding af
   syncSheetHeight();
   layoutView();
   requestRender(); // P4: de lus kan stilstaan; een nieuwe buffermaat is leeg tot de volgende weergave
@@ -4765,11 +5108,19 @@ function uiBufferSize() {
   }
   renderer.setDrawingBufferSize(W, H, uiDpr);
 }
+// Lak met clearcoat: elk basismateriaal van de auto met een clearcoat (de lak en de varianten die een domein ervan kloont), één
+// keer verzameld met de oorspronkelijke waarde. Lichte weergave zet ze op 0, volle kwaliteit zet de oorspronkelijke waarde terug.
+let uiLakMats = null;
+function uiLakList() {
+  if (!uiLakMats) { uiLakMats = new Map(); for (const m of MESHES) { const b = m.userData.base; if (b && b.clearcoat > 0 && !uiLakMats.has(b)) uiLakMats.set(b, b.clearcoat); } }
+  return uiLakMats;
+}
 function uiSetLite(on) {
   uiAdapted = true; uiLite = on;
-  const cc = on ? 0 : 1;
-  MAT.paint.clearcoat = cc; MAT.paint.needsUpdate = true;
-  for (const m of [uiHV.get(MAT.paint), uiSL.get(MAT.paint)]) if (m) { m.clearcoat = on ? 0 : 0.2; m.needsUpdate = true; }
+  for (const [b, cc] of uiLakList()) {
+    b.clearcoat = on ? 0 : cc; b.needsUpdate = true;
+    for (const m of [uiHV.get(b), uiSL.get(b)]) if (m) { m.clearcoat = on ? 0 : 0.2; m.needsUpdate = true; }
+  }
   els.qualityRow.hidden = false; els.qualityNote.hidden = !on; els.quality.checked = !on;
   uiSetDpr(uiPickDpr(false));
   requestRender();
@@ -4784,6 +5135,7 @@ function uiMeasure(now, active) {
   uiLastFrame = now; uiPrevActive = active;
 }
 function uiNearFar() {
+  if (uiCamHeld()) return; // cockpit: vaste near en far (CFG.cockpit), terug bij het uitstappen
   const d = camera.position.distanceTo(controls.target);
   const near = clamp(d / 250, 0.004, 0.08), far = Math.max(80, d * 30);
   if (Math.abs(near - camera.near) / camera.near > 0.2 || Math.abs(far - camera.far) / camera.far > 0.2) { camera.near = near; camera.far = far; camera.updateProjectionMatrix(); }
@@ -4837,6 +5189,7 @@ function uiTick(dt) {
   if (stepCam(dt)) active = true;
   if (stepGround(dt)) active = true;
   if (uiStepFade(dt)) active = true; // U4
+  if (uiStepCk(dt)) active = true; // cockpit: overgang naar de stoel of terug
   if (uiVisDirty) { applyVisibility(); active = true; }
   return active;
 }
@@ -4860,13 +5213,14 @@ function uiFrame(now) {
   if (uiLoopWoke) { uiLoopWoke = false; last = now - 1000 / 60; needs = true; }
   const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
   const active = uiTick(dt);
-  const moved = controls.update(); // demping: de camera loopt na het loslaten nog even uit
-  const drew = active || needs || controls.autoRotate ? uiRenderFrame(now, active) : false;
+  const held = uiCamHeld(), spin = controls.autoRotate && !held; // de cockpit houdt de camera vast: geen orbit, geen draaien
+  const moved = held ? false : controls.update(); // demping: de camera loopt na het loslaten nog even uit
+  const drew = active || needs || spin ? uiRenderFrame(now, active) : false;
   uiDebugFrame(now, dt, drew);
   const busy = uiBackgroundWork(now, active);
   if (uiWasActive && !active) { needs = true; uiAfterAnim(); }
   uiWasActive = active;
-  return active || needs || moved || controls.autoRotate || busy;
+  return active || needs || moved || spin || busy;
 }
 function uiRenderFrame(now, active) {
   uiSetDpr(uiPickDpr(active));
@@ -4913,9 +5267,10 @@ let uiUrlLast = null;
 function uiUrlSync() {
   let u; try { u = new URL(location.href); } catch (_) { return; }
   if (!/^https?:$/.test(u.protocol)) return;
-  const q = u.searchParams; q.delete('preset'); q.delete('open');
+  const q = u.searchParams; q.delete('preset'); q.delete('open'); q.delete('cockpit');
+  if (COCKPIT) q.set('cockpit', COCKPIT.id); // cockpit: de zitplaats, en de open openers zoals in Openen
   if (ACTIVE_PRESET && appPresetById.has(ACTIVE_PRESET) && ACTIVE_PRESET !== 'assembled') q.set('preset', ACTIVE_PRESET);
-  else if (OPENMODE) {
+  else if (OPENMODE || COCKPIT) {
     const open = OPENERS.filter(n => n.ot > 0).map(n => uiNameCount.get(n.name) === 1 ? n.name : uiRelPath(n));
     if (open.length) q.set('open', open.join(','));
   }
@@ -4926,7 +5281,7 @@ function uiUrlSync() {
 }
 function uiUrlApply() {
   let q; try { q = new URLSearchParams(location.search); } catch (_) { return; }
-  const pid = q.get('preset'), open = q.get('open');
+  const pid = q.get('preset'), open = q.get('open'), ck = q.get('cockpit');
   if (pid) {
     const p = appPresetById.get(pid);
     if (p && !p.tour && appPresetOk(p)) { appApplyPreset(p, { noHistory: true }); finishAll(); return; }
@@ -4936,6 +5291,8 @@ function uiUrlApply() {
     const p = { id: 'url', cat: 'Openen', label: TXT.gedeeldeStand, note: TXT.gedeeldeStandUitleg, opens: refs };
     if (refs.length && appPresetOk(p)) { appApplyPreset(p, { noHistory: true }); finishAll(); }
   }
+  // ?cockpit=zitplaats: direct op de stoel (zonder overgang); stap terug brengt de beginstand van de pagina terug
+  if (ck && uiCkSeat(ck)) { uiSetCockpit(ck, { instant: true }); finishAll(); }
 }
 
 /* ---------- start (uiReady en uiReadyT staan bovenin app2-panel.js) ---------- */
@@ -4968,6 +5325,7 @@ uiWarmMaterials();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const n of ALL) n._lw = null; uiUiChanged(); layoutView(); });
 
 function finishAll() {
+  if (uiCkAnim) uiCkAnimEnd(); // cockpit: de overgang naar de stoel of terug direct in de eindstand
   if (uiRefitTimer) uiRefitNow();
   for (const n of uiAnim) { n.delay = 0; n.k = 1; n.amt = n.target; placeKids(n); }
   if (uiAnim.size) { uiAnim.clear(); uiOpenResync(); }
@@ -4980,7 +5338,7 @@ function finishAll() {
   uiFadeEnd(); // U4: ook de fade bij isoleren is dan klaar
   applyVisibility();
   ground.position.y = groundTarget; blob.position.y = groundTarget + 0.002;
-  controls.update();
+  if (!uiCamHeld()) controls.update();
   ROOT.obj.updateMatrixWorld(true); camera.updateMatrixWorld();
   uiAnchorPrefetch(); uiAnchorFlush();
   uiAfterAnim(); uiSyncCats(); uiSyncLabels();
@@ -5018,6 +5376,7 @@ function uiState() {
     open: ASMS.filter(n => n.target > 0.5).map(n => n.name), selected: (SEL || ROOT).name, iso: ISO.map(n => n.name), xray: XRAY,
     explode: { group: w.name, value: L ? +(uiExplodeX(w) / L).toFixed(4) : 0, levels: L }, history: uiHist.length,
     lifted: uiLifted ? uiLifted.name : null, preset: ACTIVE_PRESET, dim: DIM ? DIM.name : null, mode: MODE, openMode: OPENMODE, openers: OPENERS.filter(n => n.ot > 0).map(n => n.name), tour: !!appTour, playing: !!uiPlayS, sys: SYSCOL,
+    cockpit: COCKPIT ? COCKPIT.id : null,
   };
 }
 function uiFrameOf(names) {
@@ -5103,6 +5462,13 @@ window.__model = {
   norm: uiNorm, searchTerms: uiSearchTerms,                             // U10
   saveImage: uiSaveImage,                                               // U9
   toast: uiToast,                                                       // U8
+  // cockpit (golf 5l): setCockpit(zitplaats | null, direct) stapt in, over of uit; cockpit() geeft de stand (null: uit) met yaw,
+  // pitch en gezichtsveld in graden en het oog in meter; lookAt(yaw, pitch) draait het hoofd (begrensd, geeft de stand);
+  // cockpitSeats() de zitplaatsen uit auto.json (leeg zonder cockpit)
+  setCockpit: (id, instant) => { hideHint(true); uiSetCockpit(id, { instant: !!instant }); return uiCkState(); },
+  cockpit: uiCkState,
+  lookAt: (yaw, pitch) => { uiCkLook(yaw, pitch); return uiCkState(); },
+  cockpitSeats: () => uiCkSeats.map(st => ({ id: st.id, label: st.label, knoop: st.knoop || null, oog: st.oog.slice(), kijk: (st.kijk || [0, 0]).slice() })),
 };
 // de testhaak heet in elk model __model; AUTO.hook geeft er per auto een tweede naam aan
 if (AUTO.hook && AUTO.hook !== '__model') window[AUTO.hook] = window.__model;

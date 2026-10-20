@@ -13,7 +13,7 @@ function layoutView() {
   const acts = els.topbar.querySelector('.top-actions').getBoundingClientRect();
   const sheet = els.sheet.getBoundingClientRect();
   let dockTop = H;
-  for (const el of [$('modes'), $('xctl'), els.presets, $('openCtl'), $('openList'), els.isoBadge]) { const r = el.getBoundingClientRect(); if (r.height > 0 && r.top < dockTop) dockTop = r.top; }
+  for (const el of [$('modes'), $('xctl'), els.presets, $('openCtl'), $('openList'), els.isoBadge, $('ckCtl')]) { const r = el.getBoundingClientRect(); if (r.height > 0 && r.top < dockTop) dockTop = r.top; }
   if (wide) {
     VIEW.l = 0; VIEW.r = Math.max(0, W - sheet.left + 8);
     VIEW.t = Math.min(H * 0.3, title.bottom + 6);
@@ -55,7 +55,7 @@ function uiFitStale() { return uiLastFit === uiFitRef && uiFitFree >= 0 && Math.
 function uiRefitNow() {
   const check = uiRefitCheck;
   clearTimeout(uiRefitTimer); uiRefitTimer = 0; uiRefitCheck = false;
-  if (uiUserCam || !uiLastFit) return;
+  if (uiUserCam || !uiLastFit || uiCamHeld()) return; // de cockpit houdt de camera vast
   if (check && !uiFitStale()) return; // alleen een layoutwijziging als aanleiding: niet herkadreren als de camera al op dit vrije beeld past
   const f = uiLastFit;
   if (f.preset) { const c = f.preset.cam || {}; focusNodes(appSubject(f.preset), appPresetDir(f.preset), c.pad || 1.06, { dur: 0.4 }); uiLastFit = f; }
@@ -75,6 +75,7 @@ function resize() {
   uiDpr = uiPickDpr(false); uiBufferSize();
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
+  if (COCKPIT) uiCkApply(); // het gezichtsveld van de cockpit hangt van de beeldverhouding af
   syncSheetHeight();
   layoutView();
   requestRender(); // P4: de lus kan stilstaan; een nieuwe buffermaat is leeg tot de volgende weergave
@@ -108,11 +109,19 @@ function uiBufferSize() {
   }
   renderer.setDrawingBufferSize(W, H, uiDpr);
 }
+// Lak met clearcoat: elk basismateriaal van de auto met een clearcoat (de lak en de varianten die een domein ervan kloont), één
+// keer verzameld met de oorspronkelijke waarde. Lichte weergave zet ze op 0, volle kwaliteit zet de oorspronkelijke waarde terug.
+let uiLakMats = null;
+function uiLakList() {
+  if (!uiLakMats) { uiLakMats = new Map(); for (const m of MESHES) { const b = m.userData.base; if (b && b.clearcoat > 0 && !uiLakMats.has(b)) uiLakMats.set(b, b.clearcoat); } }
+  return uiLakMats;
+}
 function uiSetLite(on) {
   uiAdapted = true; uiLite = on;
-  const cc = on ? 0 : 1;
-  MAT.paint.clearcoat = cc; MAT.paint.needsUpdate = true;
-  for (const m of [uiHV.get(MAT.paint), uiSL.get(MAT.paint)]) if (m) { m.clearcoat = on ? 0 : 0.2; m.needsUpdate = true; }
+  for (const [b, cc] of uiLakList()) {
+    b.clearcoat = on ? 0 : cc; b.needsUpdate = true;
+    for (const m of [uiHV.get(b), uiSL.get(b)]) if (m) { m.clearcoat = on ? 0 : 0.2; m.needsUpdate = true; }
+  }
   els.qualityRow.hidden = false; els.qualityNote.hidden = !on; els.quality.checked = !on;
   uiSetDpr(uiPickDpr(false));
   requestRender();
@@ -127,6 +136,7 @@ function uiMeasure(now, active) {
   uiLastFrame = now; uiPrevActive = active;
 }
 function uiNearFar() {
+  if (uiCamHeld()) return; // cockpit: vaste near en far (CFG.cockpit), terug bij het uitstappen
   const d = camera.position.distanceTo(controls.target);
   const near = clamp(d / 250, 0.004, 0.08), far = Math.max(80, d * 30);
   if (Math.abs(near - camera.near) / camera.near > 0.2 || Math.abs(far - camera.far) / camera.far > 0.2) { camera.near = near; camera.far = far; camera.updateProjectionMatrix(); }
@@ -180,6 +190,7 @@ function uiTick(dt) {
   if (stepCam(dt)) active = true;
   if (stepGround(dt)) active = true;
   if (uiStepFade(dt)) active = true; // U4
+  if (uiStepCk(dt)) active = true; // cockpit: overgang naar de stoel of terug
   if (uiVisDirty) { applyVisibility(); active = true; }
   return active;
 }
@@ -203,13 +214,14 @@ function uiFrame(now) {
   if (uiLoopWoke) { uiLoopWoke = false; last = now - 1000 / 60; needs = true; }
   const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
   const active = uiTick(dt);
-  const moved = controls.update(); // demping: de camera loopt na het loslaten nog even uit
-  const drew = active || needs || controls.autoRotate ? uiRenderFrame(now, active) : false;
+  const held = uiCamHeld(), spin = controls.autoRotate && !held; // de cockpit houdt de camera vast: geen orbit, geen draaien
+  const moved = held ? false : controls.update(); // demping: de camera loopt na het loslaten nog even uit
+  const drew = active || needs || spin ? uiRenderFrame(now, active) : false;
   uiDebugFrame(now, dt, drew);
   const busy = uiBackgroundWork(now, active);
   if (uiWasActive && !active) { needs = true; uiAfterAnim(); }
   uiWasActive = active;
-  return active || needs || moved || controls.autoRotate || busy;
+  return active || needs || moved || spin || busy;
 }
 function uiRenderFrame(now, active) {
   uiSetDpr(uiPickDpr(active));
@@ -256,9 +268,10 @@ let uiUrlLast = null;
 function uiUrlSync() {
   let u; try { u = new URL(location.href); } catch (_) { return; }
   if (!/^https?:$/.test(u.protocol)) return;
-  const q = u.searchParams; q.delete('preset'); q.delete('open');
+  const q = u.searchParams; q.delete('preset'); q.delete('open'); q.delete('cockpit');
+  if (COCKPIT) q.set('cockpit', COCKPIT.id); // cockpit: de zitplaats, en de open openers zoals in Openen
   if (ACTIVE_PRESET && appPresetById.has(ACTIVE_PRESET) && ACTIVE_PRESET !== 'assembled') q.set('preset', ACTIVE_PRESET);
-  else if (OPENMODE) {
+  else if (OPENMODE || COCKPIT) {
     const open = OPENERS.filter(n => n.ot > 0).map(n => uiNameCount.get(n.name) === 1 ? n.name : uiRelPath(n));
     if (open.length) q.set('open', open.join(','));
   }
@@ -269,7 +282,7 @@ function uiUrlSync() {
 }
 function uiUrlApply() {
   let q; try { q = new URLSearchParams(location.search); } catch (_) { return; }
-  const pid = q.get('preset'), open = q.get('open');
+  const pid = q.get('preset'), open = q.get('open'), ck = q.get('cockpit');
   if (pid) {
     const p = appPresetById.get(pid);
     if (p && !p.tour && appPresetOk(p)) { appApplyPreset(p, { noHistory: true }); finishAll(); return; }
@@ -279,6 +292,8 @@ function uiUrlApply() {
     const p = { id: 'url', cat: 'Openen', label: TXT.gedeeldeStand, note: TXT.gedeeldeStandUitleg, opens: refs };
     if (refs.length && appPresetOk(p)) { appApplyPreset(p, { noHistory: true }); finishAll(); }
   }
+  // ?cockpit=zitplaats: direct op de stoel (zonder overgang); stap terug brengt de beginstand van de pagina terug
+  if (ck && uiCkSeat(ck)) { uiSetCockpit(ck, { instant: true }); finishAll(); }
 }
 
 /* ---------- start (uiReady en uiReadyT staan bovenin app2-panel.js) ---------- */
@@ -311,6 +326,7 @@ uiWarmMaterials();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const n of ALL) n._lw = null; uiUiChanged(); layoutView(); });
 
 function finishAll() {
+  if (uiCkAnim) uiCkAnimEnd(); // cockpit: de overgang naar de stoel of terug direct in de eindstand
   if (uiRefitTimer) uiRefitNow();
   for (const n of uiAnim) { n.delay = 0; n.k = 1; n.amt = n.target; placeKids(n); }
   if (uiAnim.size) { uiAnim.clear(); uiOpenResync(); }
@@ -323,7 +339,7 @@ function finishAll() {
   uiFadeEnd(); // U4: ook de fade bij isoleren is dan klaar
   applyVisibility();
   ground.position.y = groundTarget; blob.position.y = groundTarget + 0.002;
-  controls.update();
+  if (!uiCamHeld()) controls.update();
   ROOT.obj.updateMatrixWorld(true); camera.updateMatrixWorld();
   uiAnchorPrefetch(); uiAnchorFlush();
   uiAfterAnim(); uiSyncCats(); uiSyncLabels();
@@ -361,6 +377,7 @@ function uiState() {
     open: ASMS.filter(n => n.target > 0.5).map(n => n.name), selected: (SEL || ROOT).name, iso: ISO.map(n => n.name), xray: XRAY,
     explode: { group: w.name, value: L ? +(uiExplodeX(w) / L).toFixed(4) : 0, levels: L }, history: uiHist.length,
     lifted: uiLifted ? uiLifted.name : null, preset: ACTIVE_PRESET, dim: DIM ? DIM.name : null, mode: MODE, openMode: OPENMODE, openers: OPENERS.filter(n => n.ot > 0).map(n => n.name), tour: !!appTour, playing: !!uiPlayS, sys: SYSCOL,
+    cockpit: COCKPIT ? COCKPIT.id : null,
   };
 }
 function uiFrameOf(names) {
@@ -446,6 +463,13 @@ window.__model = {
   norm: uiNorm, searchTerms: uiSearchTerms,                             // U10
   saveImage: uiSaveImage,                                               // U9
   toast: uiToast,                                                       // U8
+  // cockpit (golf 5l): setCockpit(zitplaats | null, direct) stapt in, over of uit; cockpit() geeft de stand (null: uit) met yaw,
+  // pitch en gezichtsveld in graden en het oog in meter; lookAt(yaw, pitch) draait het hoofd (begrensd, geeft de stand);
+  // cockpitSeats() de zitplaatsen uit auto.json (leeg zonder cockpit)
+  setCockpit: (id, instant) => { hideHint(true); uiSetCockpit(id, { instant: !!instant }); return uiCkState(); },
+  cockpit: uiCkState,
+  lookAt: (yaw, pitch) => { uiCkLook(yaw, pitch); return uiCkState(); },
+  cockpitSeats: () => uiCkSeats.map(st => ({ id: st.id, label: st.label, knoop: st.knoop || null, oog: st.oog.slice(), kijk: (st.kijk || [0, 0]).slice() })),
 };
 // de testhaak heet in elk model __model; AUTO.hook geeft er per auto een tweede naam aan
 if (AUTO.hook && AUTO.hook !== '__model') window[AUTO.hook] = window.__model;

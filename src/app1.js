@@ -262,8 +262,9 @@ function uiSetOpen(n, v, instant) {
   if (typeof n === 'string') n = uiRef(n, 'setOpen');
   if (!n || !n.opn || n.opn.lead) return false;
   v = clamp(+v || 0, 0, 1);
-  if (v > 0 && n.opn.needN && n.opn.needN.ot === 0) uiSetOpen(n.opn.needN, 1, instant);
-  if (v === 0) for (const d of n.opn.needBy) if (d.ot > 0) uiSetOpen(d, 0, instant);
+  // needs is er voor de blik van buiten (eerst het portier, dan het kastje); in de cockpit zit je al binnen en geldt de keten niet
+  if (v > 0 && n.opn.needN && n.opn.needN.ot === 0 && !COCKPIT) uiSetOpen(n.opn.needN, 1, instant);
+  if (v === 0 && !COCKPIT) for (const d of n.opn.needBy) if (d.ot > 0) uiSetOpen(d, 0, instant);
   if (n.opn.vis && ((n.ot > 0) !== (v > 0) || (n.ou > 0) !== (v > 0))) uiVisDirty = true;
   if (instant || REDUCED) { n.ot = v; n.ou = v; n.opk = 1; uiOpenAnim.delete(n); uiOpenApply(n); uiStrutSync(); uiWake(); return true; }
   if (n.ot === v && (uiOpenAnim.has(n) || n.ou === v)) return true;
@@ -425,6 +426,13 @@ function isUnder(n, a) { for (let p = n; p; p = p.parent) if (p === a) return tr
 let ISO = [];
 let XRAY = false, SYSCOL = false, SEL = null;
 let OPENMODE = false;   // klikmodus Openen (bediening in app2-controls.js): een klik opent of sluit openers in plaats van uit te klappen
+// Cockpit (golf 5l, bediening in app2-controls.js): COCKPIT is de gekozen zitplaats uit auto.json (null: uit). Zolang de cockpit
+// aanstaat of de overgang naar de stoel of terug loopt (uiCkAnim), houdt de cockpit de camera vast (uiCamHeld): de orbitbediening,
+// het kadreren (focusNodes, animCam, herkadreren) en de regeling van near en far staan dan stil. uiCkSave is de camera van voor
+// de cockpit (stap terug bewaart die, niet het oog), uiCkShow de ingesloten knopen die in de cockpit toch getekend worden.
+// uiCkHide zijn de delen van de eigen stoel die verborgen zijn zolang je verder dan CFG.cockpit.verbergYaw omkijkt.
+let COCKPIT = null, uiCkAnim = null, uiCkSave = null, uiCkShow = null, uiCkHide = null;
+const uiCamHeld = () => !!(COCKPIT || uiCkAnim);
 let MODE = 'part', LABELS = true;   // klikmodus van het dock (UI_MODES in app2-panel.js) en de schakelaar Labels
 let CTX = null, ACTIVE_PRESET = 'assembled'; // groep die de labels krijgt na de laatste handeling; actieve preset (null: geen)
 let uiLabelForce = false;          // de labels van CTX gaan voor (preset met `labels`, uiLabelGroup in app2-labels.js)
@@ -437,14 +445,15 @@ function uiInScope(a) { return !ISO.length || ISO.some(r => isUnder(a, r)); }
 // een open opener (de ouder zelf of een broer) legt de ingesloten delen van die ouder bloot
 const uiOpenNear = (p, fin) => (fin ? p.ot : p.ou) > 0 || p.kids.some(k => k.opn && (fin ? (k.opn.lead ? k.opn.lead.ot : k.ot) : k.ou) > 0);
 // fin: in de eindstand (na alle lopende animaties; voor camera en kaders), anders de stand van nu (golf 5c-2, K3: was ook uiPredHidden)
-function uiInnerHidden(n, fin = false) { const p = n.parent; return !!(n.inner && p && p.target === 0 && (fin || p.amt < 1e-4) && uiInScope(p) && !uiOpenNear(p, fin)); }
+// in de cockpit zie je de cabine van binnen: de ingesloten knopen onder AUTO.cockpit.binnen (uiCkShow) blijven dan zichtbaar
+function uiInnerHidden(n, fin = false) { const p = n.parent; return !!(n.inner && p && p.target === 0 && (fin || p.amt < 1e-4) && uiInScope(p) && !uiOpenNear(p, fin) && !(uiCkShow && uiCkShow.has(n))); }
 function applyVisibility() {
   const onPath = new Set();
   for (const r of ISO) for (let a = r.parent; a; a = a.parent) onPath.add(a);
   uiPickable.length = 0;
   (function walk(n, inside, pv) {
     const ins = inside || !ISO.length || ISO.includes(n);
-    const own = (ins || onPath.has(n)) && !uiInnerHidden(n) && !(n.hideN && n.hideN.some(m => m.ot > 0));
+    const own = (ins || onPath.has(n)) && !uiInnerHidden(n) && !(n.hideN && n.hideN.some(m => m.ot > 0)) && !(uiCkHide && uiCkHide.has(n));
     n.obj.visible = own; n.vis = own; n.ev = pv && own;
     if (!n.asm) { if (n.ev && ins) uiPickable.push(n.obj); return; }
     for (const k of n.kids) walk(k, ins, n.ev);
@@ -669,6 +678,7 @@ function uiFitPoints(pts, dir, pad = 1.08, opt = {}) {
 }
 const uiSph0 = new THREE.Spherical(), uiSph1 = new THREE.Spherical();
 function animCam(pos, target, dur, delay = 0) {
+  if (uiCamHeld()) return; // de cockpit houdt de camera vast
   dur = REDUCED ? 0.01 : (dur || 0.95);
   camAnim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), t: 0, dur, delay: REDUCED ? 0 : delay, started: false };
   uiUserCam = false; uiWake();
@@ -698,6 +708,7 @@ let uiLastFit = null;
 // (layoutView en uiRefitNow in app2-loop.js zetten ze; uiSnap en uiRestore bewaren ze)
 let uiFitRef = null, uiFitFree = -1;
 function focusNodes(nodes, dir, pad, opt = {}) {
+  if (uiCamHeld()) return; // in de cockpit kadreert niets: het kader van voor de cockpit (uiLastFit) blijft staan
   const pts = uiCollect(nodes, true);
   if (!pts.length) uiCollect(nodes.map(() => ROOT), true, pts);
   const f = uiFitPoints(pts, dir, pad || 1.08, opt);
@@ -786,7 +797,7 @@ function stepGround(dt) {
 /* ---------- stap terug (geschiedenis) ---------- */
 const uiHist = [];
 function uiSnap() {
-  return {
+  const s = {
     t: ASMS.map(n => n.target), o: OPENERS.map(n => n.ot),
     pull: ALL.filter(n => n.pull.lengthSq() > 0).map(n => [n.id, n.pull.x, n.pull.y, n.pull.z]),
     lift: uiLifted ? uiLifted.id : null,
@@ -796,6 +807,9 @@ function uiSnap() {
     // G1: het kader waarop deze camera is ingepast, het vrije beeld daarvan en of de gebruiker de camera zelf had verplaatst
     fit: uiLastFit, ffree: uiLastFit === uiFitRef ? uiFitFree : H - VIEW.t - VIEW.b, user: uiUserCam,
   };
+  // in de cockpit (of tijdens de overgang) de camera van voor de cockpit: stap terug na het uitstappen zet nooit een oog in de auto
+  if (uiCkSave) Object.assign(s, { cam: [uiCkSave.pos.clone(), uiCkSave.target.clone()], fit: uiCkSave.lastFit, ffree: uiCkSave.fitFree, user: uiCkSave.user });
+  return s;
 }
 function uiPush() {
   uiHist.push(uiSnap());
@@ -871,7 +885,7 @@ function uiBatchClean() {
     const n = ALL[i];
     if (!n.asm) { n._bc = !uiSelSet.has(n.obj) && !uiHovSet.has(n.obj); continue; }
     let c = n.target === 0 && n.amt === 0 && !uiAnim.has(n) && !(n.strut && n.strut.dirty);
-    if (c) for (const k of n.kids) { if (k.inner) continue; if (!k._bc || k.hasOff || k.ou > 0 || (k.strut && k.strut.dirty) || (k.stayO && k.stayO.ou > 0)) { c = false; break; } }
+    if (c) for (const k of n.kids) { if (k.inner) continue; if (!k._bc || (uiCkHide && uiCkHide.has(k)) || k.hasOff || k.ou > 0 || (k.strut && k.strut.dirty) || (k.stayO && k.stayO.ou > 0)) { c = false; break; } }
     n._bc = c;
   }
 }

@@ -38,6 +38,7 @@ Wat de generieke laag van een auto verwacht, en niet meer dan dat:
 - `body.js` definieert `ZF`, `ZR` (lengte) en `BOD_WMAX`, `BOD_MIRW`, `BOD_H` (halve breedte zonder en met spiegels, hoogte); de huidfuncties `HW`, `YB`, `YT`, `surfX` zijn welkom (de tests gebruiken ze als ze bestaan).
 - `data/silhouet.json` met de meetpunten; `planY` en `beltY` (hoogtebereik van de zijstralen en van het zoeken naar de raamlijn) zijn optioneel en staan standaard op die van laguna3 (0,22 tot 1,05 en 0,80 tot 1,15 m). Een hogere auto zoals espace5 zet ze zelf.
 - `auto.json: docshots` is de lijst `[bestandsnaam, preset-id]` voor `docs/screenshots` (`tools/orkestratie/docshots.py`; `mobiel.png` komt er altijd bij).
+- `auto.json: cockpit` is optioneel: zonder het veld toont de pagina geen knop Cockpit (zie "Wat golf 5l aan de generieke laag toevoegde" hieronder).
 - `auto.json: pnToelichting` zegt of de notitie bij een verkoopeenheid (`note`) als Toelichting in het paneel staat (espace5 ja; in laguna3 zijn het onderzoeksaantekeningen, daar nee).
 - `presetdata.js` definieert `appCar`, `appCats`, `PRESETS` en `appTourSteps`.
 - `partnumbers.js` definieert `PN_DATA` (leeg mag).
@@ -146,6 +147,43 @@ In laguna3 (golf 5f en 5e, versie 12, tak `golf-5f`) kwamen twee generieke wijzi
 - `tools/harness.py` en `tools/orkestratie/finaltests.sh`: `LAG3_GPU=1` start de testbrowser op de echte GPU (ANGLE Metal, alleen macOS; op andere systemen stopt de harness met een melding) en meldt dat in het rapport. Alleen voor beelden die het oog beoordeelt (de herkenbaarheidspoort, de galerij); `finaltests.sh` zet de variabele uit, zodat de testset, `visdiff` en de basislijnen op SwiftShader blijven. De naam van de variabele is nog die van de eerste auto; een doelauto mag hem houden.
 
 Autospecifiek en dus niet generiek: de `bod*`-constanten van de B-stijl en het staartvlak, de kaartlezer en de startknop in `interior.js`, en de ATF-tekst in `drivetrain.js`.
+
+## Wat golf 5l aan de generieke laag toevoegde
+
+In laguna3 (golf 5l, tak `golf-5l-app`) kwam een derde modus naast Uitklappen en Openen: Cockpit, rondkijken vanaf een zitplaats in de auto. Alles staat in de generieke bestanden (`src/core.js`, `app1.js`, `app2-*.js`, `head.html`); wat per auto verschilt, staat in `auto.json`.
+
+**Het veld `cockpit` in `auto.json`** (optioneel):
+
+```json
+"cockpit": {
+  "stoelen": [
+    {"id": "bestuurder", "label": "Bestuurder", "knoop": "Bestuurdersstoel", "oog": [0.37, 1.12, -0.30], "kijk": [0, -8], "verberg": ["Interieur/Stoelen/Bestuurdersstoel/Rugleuning"]}
+  ],
+  "binnen": [],
+  "licht": [0, 1.02, 0.0]
+}
+```
+
+- `stoelen`: de zitplaatsen in de volgorde van de keuzelijst. `id` staat in de adresbalk (`?cockpit=bestuurder`), `label` in de keuzelijst en de paneeltekst.
+- `oog`: de oogpositie in het autoframe in meter (x naar links, y omhoog, z naar voren). Meet hem met stralen: omhoog moet eerst het dak of de hemel komen, omlaag de eigen stoel, en in geen richting iets binnen 8 cm (itest controle 23 toetst dat per zitplaats).
+- `kijk`: de standaard kijkrichting `[yaw, pitch]` in graden; yaw 0 is recht vooruit, positief naar links, pitch positief omhoog.
+- `knoop`: de groep van de stoel (pad of unieke naam); de tests gebruiken hem voor de straal omlaag.
+- `verberg`: delen van de eigen stoel die verdwijnen zodra je verder dan `CFG.cockpit.verbergYaw` omkijkt, anders vult de eigen hoofdsteun het beeld.
+- `binnen`: groepen waarvan de ingesloten (`inner`) onderdelen in de cockpit getekend worden. In laguna3 leeg: de interieuraudit van golf 5l vond geen ingesloten interieurdeel dat van binnen te zien is.
+- `licht`: de plaats van het zwakke cabinelicht (standaard `[0, 1, 0]`).
+
+**Lezen met haken.** De code leest het veld als `AUTO['cockpit']`, niet als `AUTO.cockpit`. `tools/framework.py check` eist elk veld dat als `AUTO.naam` in de generieke laag staat in `auto.json`; met haken blijft `cockpit` optioneel, zodat een auto zonder cockpit (espace5) groen blijft en gewoon geen knop krijgt. Gebruik dezelfde vorm voor een volgend optioneel veld.
+
+**Wat de generieke laag doet:**
+
+- `CFG.cockpit` (`core.js`): gezichtsveld (standaard, kleinste, grootste; staand omgerekend op de korte kant, verticaal hoogstens `vfovMax`), draaigrenzen, de leundoos (opzij, voor, `achter` kleiner dan voor, omlaag, omhoog), near en far, de overgang, de lichtstand (`licht`) en de kleuren van de buitenwereld per thema (`wereld`).
+- Eigen kijkbediening in `app2-controls.js` en `app2-input.js` (OrbitControls uit, doel 1 m voor het oog); zolang de cockpit aanstaat of de overgang loopt, staan kadreren, herkadreren en de regeling van near en far stil (`uiCamHeld` in `app1.js`). Bij uitstappen komen camera, doel, oriëntatie, gezichtsveld en near/far exact terug.
+- Ingang: alles gemonteerd (preset `assembled` met `keepOpen`), geen isolatie, dimmen of röntgen; geen labels, presets of explosieschuif. Een klik opent of sluit een opener; `needs` geldt binnen niet. Uitstappen sluit wat alleen van binnen open kon (een opener waarvan de `needs` dicht is).
+- Buitenwereld (luchtkoepel en grondvlak) en lichtstand alleen in de cockpit. Het cabinelicht `uiCabin` staat altijd in de scène met sterkte 0, zodat geen shader opnieuw compileert; `uiThemeLights` zet eerst de lichten van het thema en daarna, in de cockpit, de lichtstand.
+- Lichte weergave (`uiSetLite`, `app2-loop.js`) zet nu de clearcoat van elk basismateriaal met clearcoat uit en zet bij volle kwaliteit de oorspronkelijke waarde terug; ook lakvarianten die een domein van de lak kloont, gaan mee, zonder lijst of autonaam.
+- Testhaken: `setCockpit(id | null, direct)`, `cockpit()`, `lookAt(yaw, pitch)` en `cockpitSeats()`; `state().cockpit`.
+
+Bij de export naar een auto zonder het veld verandert er voor de gebruiker niets. Een auto die de cockpit wil, meet eerst de oogpunten met stralen en zet daarna `verberg` en `licht`.
 
 ## espace5 naar het framework
 

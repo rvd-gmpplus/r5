@@ -137,7 +137,9 @@ canvas.addEventListener('pointerup', e => {
   const now = e.timeStamp, L = uiLastTap;
   if (L && now - L.t < CFG.gebaar.dubbelMs && now - L.t >= 0 && Math.hypot(e.clientX - L.x, e.clientY - L.y) < CFG.gebaar.dubbelPx && L.type === d.type) {
     uiLastTap = null;
-    if (!uiMode().dubbel) return; // in Openen is dubbelklik gelijk aan een enkele klik
+    const md = uiMode();
+    if (md.dubbelAct) { md.dubbelAct(L.pick); return; } // cockpit: dubbelklik zet de blik terug
+    if (!md.dubbel) return; // in Openen is dubbelklik gelijk aan een enkele klik
     if (L.pick) uiDive(L.pick); // altijd het onderdeel van de eerste tik
     return;
   }
@@ -157,6 +159,38 @@ canvas.addEventListener('contextmenu', e => e.preventDefault()); // rechtsklik z
 // click op label Koplampsproeiers). touchend afvangen onderdrukt die nagekomen click.
 canvas.addEventListener('touchend', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 canvas.addEventListener('wheel', () => { uiStopPlay(); uiStopTour(); hideHint(); uiHideTip(); }, { passive: true });
+
+/* ---------- cockpit: hoofd draaien, vooroverbuigen en zoomen (golf 5l; de orbitbediening staat dan uit) ---------- */
+// Slepen (muis, één vinger) draait het hoofd; rechts slepen of Shift+slepen buigt voorover of opzij; twee vingers schuiven en
+// knijpen (gezichtsveld); scrollen zoomt. Een tik of klik zonder slepen blijft een klik (pointerup hierboven). Muis en vinger
+// houden het slepen vast (pointer capture), ook buiten het canvas.
+const uiCkPtrs = new Map();
+const uiCkSpan = () => { const [a, b] = [...uiCkPtrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+canvas.addEventListener('pointerdown', e => {
+  if (!COCKPIT) return;
+  uiCkPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) { }
+});
+canvas.addEventListener('pointermove', e => {
+  const p = uiCkPtrs.get(e.pointerId);
+  if (!p || !COCKPIT) return;
+  const two = uiCkPtrs.size >= 2, d0 = two ? uiCkSpan() : 0;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (!dx && !dy) return;
+  const k = CFG.cockpit.schuifMPx;
+  if (two) { const d1 = uiCkSpan(); if (d0 > 1 && d1 > 1) uiCk.fov *= d0 / d1; uiCkShift(dx / 2 * k, -dy / 2 * k, 0); } // het midden van de vingers schuift half zo ver
+  else if ((e.buttons & 2) || e.shiftKey) uiCkShift(dx * k, -dy * k, 0);
+  else uiCkTurn(dx, dy);
+  uiHideTip();
+});
+const uiCkPtrEnd = e => { uiCkPtrs.delete(e.pointerId); };
+canvas.addEventListener('pointerup', uiCkPtrEnd);
+canvas.addEventListener('pointercancel', uiCkPtrEnd);
+canvas.addEventListener('wheel', e => {
+  if (!COCKPIT || e.ctrlKey) return;
+  e.preventDefault();
+  uiCkZoom(Math.exp(clamp(e.deltaY, -200, 200) * CFG.cockpit.zoomWiel));
+}, { passive: false });
 
 /* ---------- hint en hulp ---------- */
 const uiHintKey = AUTO.id + '-hint-' + AUTO.hintVersie;
@@ -235,11 +269,21 @@ window.addEventListener('keydown', e => {
   const onCtl = !!(t && t.closest && t.closest('button, a, input, select, summary'));
   // U6: Esc sluit eerst het mobiele paneel (de lade), daarna pas de rest
   if (e.key === 'Escape' && uiSheetBottom() && els.sheet.dataset.state === 'open') { e.preventDefault(); setSheet('peek'); return; }
+  if (e.key === 'Escape' && COCKPIT) { e.preventDefault(); hideHint(); uiCkExit(); return; } // Esc stapt uit de cockpit
   if (e.key === 'Escape') { uiStopPlay(); uiStopTour(); hideHint(); uiBackground(); return; }
   if (e.key === 'Enter') { if (onCtl) return; e.preventDefault(); uiStopPlay(); uiStopTour(); hideHint(); uiEnter(e.shiftKey); return; }
-  if (e.key === 'Backspace') { e.preventDefault(); uiStopPlay(); uiStopTour(); uiUndo(); return; }
+  if (e.key === 'Backspace') { e.preventDefault(); if (COCKPIT) return; uiStopPlay(); uiStopTour(); uiUndo(); return; } // in de cockpit geen stap terug: die zou uitklappen terwijl je in de auto zit
   if (e.key === '?') { e.preventDefault(); uiHelp(true); return; }
-  if (e.key === 'o' || e.key === 'O') { e.preventDefault(); hideHint(); uiSetOpenMode(!OPENMODE); return; }
+  if (e.key === 'o' || e.key === 'O') { e.preventDefault(); hideHint(); uiSetOpenMode(!OPENMODE); return; } // vanuit de cockpit: uitstappen en wisselen
+  // K: cockpit aan of uit (alleen als de auto een cockpit heeft)
+  if ((e.key === 'k' || e.key === 'K') && UI_CK) { e.preventDefault(); hideHint(); COCKPIT ? uiCkExit() : uiSetCockpit(uiCk.last); return; }
+  // in de cockpit: pijltjes en W/S buigen voorover, opzij en omhoog; C zet de blik terug; cijfers (presets) doen niets
+  if (COCKPIT) {
+    const st = CFG.cockpit.stapM, mv = { ArrowLeft: [-st, 0, 0], ArrowRight: [st, 0, 0], ArrowUp: [0, st, 0], ArrowDown: [0, -st, 0], w: [0, 0, st], W: [0, 0, st], s: [0, 0, -st], S: [0, 0, -st] }[e.key];
+    if (mv && !(onCtl && /^Arrow/.test(e.key))) { e.preventDefault(); hideHint(); uiCkShift(...mv); return; }
+    if (e.key === 'c' || e.key === 'C') { e.preventDefault(); hideHint(); uiCkReset(); return; }
+    if (/^[0-9]$/.test(e.key)) return;
+  }
   // U17: / springt naar het zoekveld van de onderdelenlijst (op de telefoon gaat het paneel daarvoor open)
   if (e.key === '/') { e.preventDefault(); hideHint(); showTab('tree'); if (uiSheetBottom()) setSheet('open'); els.search.focus(); els.search.select(); return; }
   // pijltjes (niet op een bedieningselement): door de boom lopen. Omhoog = bovenliggende groep, omlaag = eerste deel,
