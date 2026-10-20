@@ -1,0 +1,11 @@
+{
+ "_uitleg": "Diepteminima per hoofdgroep (aantal onderdelen), besluit eigenaar 20 oktober 2026: factor 5 op de telling van versie 1 (golfdoel 5). Alleen tools/maat.py leest dit; --diepte maakt het een poort. Niet in tools/anchors.json: integrity.py (generiek) leest elke sleutel daar als lijst knoopnamen.",
+ "Carrosserie": 295,
+ "Interieur": 145,
+ "Aandrijflijn": 115,
+ "Onderstel": 245,
+ "Koeling en luchtinlaat": 25,
+ "Uitlaatsysteem": 15,
+ "Brandstofsysteem": 20,
+ "Elektrisch systeem": 30
+}

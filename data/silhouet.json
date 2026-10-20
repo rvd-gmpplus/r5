@@ -1,15 +1,24 @@
 {
- "_uitleg": "Silhouet in het autoframe. Versie 1 legt de stations vast op de panelen van dit model (gemeten), als vangnet tot er een fotometing is.",
- "top": [[1.7, 0.792], [1.2, 0.947], [0.6, 1.290], [0.0, 1.418], [-0.5, 1.418], [-1.0, 1.418], [-1.5, 0.844]],
- "plan": [[1.85, 0.772], [1.4, 0.845], [0.8, 0.878], [0.0, 0.882], [-0.6, 0.882], [-1.2, 0.845], [-1.75, 0.845]],
- "belt": [[0.7, 0.784], [0.3, 0.784], [-0.2, 0.804], [-0.7, 0.804]],
+ "_uitleg": "Silhouet in het autoframe (x links +, y omhoog, z voor +, meter, y = 0 de grond). Bron: brochure, genormaliseerd (besluit eigenaar golf 1): de maattekening op blad 25 is niet op schaal, dus zij- en bovenaanzicht zijn affien geschaald met een eigen schaal per richting, zodat lengte, hoogte en breedte precies de opgegeven maten zijn. Assen uit axf en axr (749 en 633 mm overhang), niet uit de tekening. top: hoogste punt per z in het zijaanzicht (de motorkaplijn is top voor z 1,0 tot 1,7); belt: onderrand van het zijraam; plan: halve breedte per z in het bovenaanzicht zonder spiegels en zonder portiergreep; onder: onderrand carrosserie, alleen ter informatie (silhouette.py leest het niet). Tolerantie 30 mm. Methode en elk getal: docs/onderzoek/exterieur-maten.md.",
+ "_bron": {
+  "document": "Renault Nederland, brochure Renault 5 E-Tech electric, oktober 2026, blad 25 afmetingen en volumes: https://cdn.group.renault.com/ren/nl/brochures-en-prijslijsten/brochures/r5-brochure.pdf.asset.pdf/1c48d6a01a.pdf",
+  "label": "brochure, genormaliseerd",
+  "render": "pdftoppm -r 300, pixel x naar rechts, y naar beneden",
+  "zijaanzicht": "neus x 291,5 en staart x 2541,0 (hulplijnen 3922) = 3922 mm, 1,74350 mm per pixel; grond y 2337,7 en hoogste punt dak y 1471 = 1498 mm, 1,72840 mm per pixel; z = (1416,25 - x) * 1,74350 mm",
+  "bovenaanzicht": "lengte x 292 tot 2476 (2185 pixel) = 3922 mm, 1,79497 mm per pixel; grootste breedte over de wielkasten y 3134 tot 4139 (1006 pixel) = 1774 mm, 1,76342 mm per pixel; middellijn y 3636; z = (1384 - x) * 1,79497 mm",
+  "nietGemeten": "top tussen z -0,9 en -1,5 (spoiler en open achterklep in de tekening); plan tussen z 0,33 en 0,69 (spiegels) en tussen z 0,06 en -0,21 (portiergreep)"
+ },
+ "top": [[1.70, 0.938], [1.60, 0.983], [1.40, 1.021], [1.20, 1.056], [1.00, 1.083], [0.80, 1.182], [0.60, 1.294], [0.40, 1.401], [0.20, 1.470], [0.00, 1.491], [-0.40, 1.498], [-0.80, 1.491], [-1.50, 1.239], [-1.60, 1.158], [-1.70, 1.069]],
+ "plan": [[1.70, 0.784], [1.50, 0.859], [1.25, 0.885], [1.00, 0.874], [0.80, 0.864], [0.20, 0.864], [-0.40, 0.861], [-0.80, 0.853], [-1.10, 0.873], [-1.30, 0.887], [-1.50, 0.875], [-1.70, 0.820]],
+ "belt": [[0.30, 1.053], [0.10, 1.056], [-0.10, 1.060], [-0.50, 1.067], [-0.70, 1.074], [-0.90, 1.079]],
+ "onder": [[1.85, 0.254], [1.75, 0.242], [0.60, 0.216], [0.20, 0.220], [-0.40, 0.227], [-0.80, 0.230], [-1.75, 0.279], [-1.85, 0.330]],
  "axf": 1.212,
  "axr": -1.328,
- "neusMax": 0.82,
- "staartMax": 0.88,
- "tolAs": 0.025,
- "tolOverhang": 0.035,
- "maxBuiten": 1,
- "planY": [0.55, 1.05],
- "beltY": [0.70, 1.20]
+ "neusMax": 0.814,
+ "staartMax": 0.850,
+ "tolAs": 0.030,
+ "tolOverhang": 0.030,
+ "maxBuiten": 0,
+ "planY": [0.20, 1.40],
+ "beltY": [0.85, 1.25]
 }
