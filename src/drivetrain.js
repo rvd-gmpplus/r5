@@ -1,6 +1,8 @@
 /* ===================== aandrijfassen ===================== */
+// halve spoor voor (1.548 mm), eigen kopie van CHS_TRACK_F in chassis.js: de naaf zit 7 cm binnen het wielvlak (docs/contract.md)
+const DRV_TRACK = 0.774;
 function drvShaft(s) {
-  const hub = [s * 0.64, AY, AXF], box = [s * 0.12, 0.35, 1.22];
+  const hub = [s * (DRV_TRACK - 0.07), AY, AXF], box = [s * 0.12, 0.35, 1.22];
   const mid = [(hub[0] + box[0]) / 2, (hub[1] + box[1]) / 2, (hub[2] + box[2]) / 2];
   return A(`Aandrijfas ${sideName(s)}`, {
     d: 'Aandrijfas met een homokineet aan de bak en een homokineet aan de naaf.',

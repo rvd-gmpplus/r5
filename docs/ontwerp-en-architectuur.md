@@ -18,7 +18,7 @@ Alle maten zijn in meter. x is links (+) en rechts (−), y omhoog vanaf de gron
 - Neus `ZF` = 1,961, staart `ZR` = −1,961 (lengte 3.922 mm).
 - Vooras `AXF` = 1,212, achteras `AXR` = −1,328 (wielbasis 2.540 mm). Wielmiddelpunt `AY` = 0,336.
 - `BOD_WMAX` (halve breedte zonder spiegels, testgrens), `BOD_MIRW` (met spiegels) en `BOD_H` (hoogte) in `src/body.js`; `integrity.py` gebruikt ze als grens.
-- Het halve spoor staat in versie 1 als `CHS_TRACK` = 0,64 in `src/chassis.js`. Dat is te smal (spoor 1,28 m tegen 1,548 en 1,532 m); de herbouw herstelt het.
+- Het halve spoor staat sinds golf 2 als `CHS_TRACK_F` = 0,774 en `CHS_TRACK_R` = 0,766 in `src/chassis.js` (spoor 1.548 en 1.532 mm). `src/drivetrain.js` heeft een eigen kopie `DRV_TRACK` = 0,774 voor de naaf, omdat het eerder laadt dan `chassis.js`. Versie 1 had één waarde `CHS_TRACK` = 0,64 (spoor 1,28 m).
 - Er is geen motorframe met krukas en geen `fromPT` of `ENG2CAR`. De motor staat dwars in het autoframe; het motorhuis staat op y 0,46 en z 1,38.
 
 ## Bronbestanden en bouwvolgorde

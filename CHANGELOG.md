@@ -1,5 +1,18 @@
 # Wijzigingen
 
+## Golf 2 (nog niet gepubliceerd)
+
+Nieuwe carrosserie op een geloft vlak. `tools/maat.py` en `tools/silhouette.py` zijn groen.
+
+- `src/body.js` herschreven: profielen over de lengte (`bodPchip`), doorsnede met vier hoekpunten, wielkastbogen met flare, raamkas en patchbouwers naar het model van laguna3. Lengte 3.929 mm, breedte 1.774 mm, hoogte 1.498 mm, spiegels 2.016 mm.
+- `src/bodyparts.js` bouwt de panelen op die huid: kap, voorschermen, bumpers, dak, stijlen, vier portieren met binnenplaat, zijruit en greep, achterklep met ruit en spoilerlip, wielkastranden, dorpels, binnenschermen, schutbord en bagageruimte. Geen Renault-ruit en geen letters.
+- Spoor 1.548 mm voor en 1.532 mm achter (`CHS_TRACK_F`, `CHS_TRACK_R` in `src/chassis.js`); wielen, fusee, draagarm, remmen en achteras volgen. Naaf in `src/drivetrain.js` mee.
+- `src/engine1.js`: secundair tandwiel iets hoger, binnen het motorhuis.
+- Zijruiten zakken 0,28 m (was 0,36 m). Openerpaden ongewijzigd.
+- Bijsturing na het visuele oordeel: C-stijl zonder richel op de flank, schuine achterrand van de ruit in het achterportier met een raamkader in lakkleur en een iets oplopende gordel; kleinere achterruit in een zwarte rand onder de daklip, wisser plat op het glas; hogere en strakkere kapvoorrand met een vlakkere kap; wielkastranden die als heup in het scherm teruglopen; zwarte wielkasten en binnenschermen; zwarte zeefdrukrand op de voorruit; ronder achterhoek.
+- `src/systems.js`: onderplaten op de dorpellijn (bodemvrijheid leest als 145 mm), batterijhuis 2 cm dunner en hoger, laadkabel binnen de motorruimte.
+- Code: eigen namen in `body.js` en `bodyparts.js` met voorvoegsel `bod`; `bodPatch` laat driehoeken zonder oppervlak weg; `drivetrain.js` leest het spoor uit de eigen constante `DRV_TRACK`; remblok tegen de schijf; differentieelhuis coaxiaal met het secundaire tandwiel.
+
 ## Golf 1 (nog niet gepubliceerd)
 
 Externe toetsen in plaats van zelfmeting. Ze staan bewust rood op het model van versie 1; golf 2 maakt ze groen.

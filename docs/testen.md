@@ -11,11 +11,11 @@ Uitzondering voor beelden die het oog beoordeelt: `LAG3_GPU=1` start de testbrow
 | Onderdeel | Stand |
 |---|---|
 | lint, `framework.py check`, smoke, integrity (0 fouten), `tri.py --gate`, `pncheck.py`, `maat.py --zelftest` | groen na golf 1 |
-| silhouette | rood tot golf 2: `data/silhouet.json` komt uit de maattekening van de brochure, genormaliseerd op 3.922, 1.498 en 1.774 mm, tolerantie 30 mm. Het model haalt het niet (`SILHOUET NIET OK`). Ook de CI-stap silhouette is daardoor rood. |
-| `tools/maat.py` | rood tot golf 2 (`MATEN NIET OK`); extra test `maat` in `auto.json` |
+| silhouette | groen sinds golf 2 (`SILHOUET OK`): `data/silhouet.json` komt uit de maattekening van de brochure, genormaliseerd op 3.922, 1.498 en 1.774 mm, tolerantie 30 mm. Op versie 1 was hij rood. |
+| `tools/maat.py` | groen sinds golf 2 (`MATEN OK`: lengte 3.929, breedte 1.774, hoogte 1.498, wielbasis 2.540, spoor 1.548 en 1.532, spiegels 2.016 mm, band 16 en 23 mm in de huid); extra test `maat` in `auto.json` |
 | `tools/itest.py` | bestaat nog niet (staat onder `auto` in `framework.json`) |
 | `docs/baseline/` (visdiff en anchorcheck) | bestaat nog niet |
-| opentest | tot golf 2 `opentest klaar in 11 s: 23 fouten, 0 meldingen` over 12 van de 13 openers (oude carrosserie), zie Bekende ruis in [CLAUDE.md](../CLAUDE.md) |
+| opentest | groen sinds golf 2 (`--strikt-min`: 0 fouten, 0 meldingen). Versie 1 eindigde met `opentest klaar in 11 s: 23 fouten, 0 meldingen` over 12 van de 13 openers. |
 | nightly | rood bij de stap itest, zie Bekende ruis in [CLAUDE.md](../CLAUDE.md) |
 | `tools/orkestratie/gateshots.py`, `poort.js`, `gallery.py`, `rays_bagage.py` | bestaan nog niet (autobestanden) |
 

@@ -25,8 +25,8 @@ function engReductor() {
   }, [
     P('Bakhuis', G.rbox(0.28, 0.26, 0.22, 0.02), MAT.aluCast, { d: 'Aluminium huis van de reductie, tegen de motor.', p: c, ex: [0, 0.08, 0] }),
     P('Primair tandwiel', gear(22, 0.07, 0.055, 0.03, 0.02, 'x'), MAT.steel, { d: 'Tandwiel op de motoras.', p: [c[0], c[1] + 0.04, c[2]], ex: [0.1, 0.08, 0], inner: true }),
-    P('Secundair tandwiel', gear(40, 0.11, 0.09, 0.03, 0.025, 'x'), MAT.steel, { d: 'Groot tandwiel op de differentieelas.', p: [c[0], c[1] - 0.05, c[2]], ex: [-0.1, -0.06, 0], inner: true }),
-    P('Differentieelhuis', G.cyl('x', 0.07, 0.07, 0.1, 20), MAT.iron, { d: 'Huis van het differentieel in de reductiebak.', p: [c[0], c[1] - 0.05, c[2] + 0.02], ex: [0, -0.12, 0.08], inner: true }),
+    P('Secundair tandwiel', gear(40, 0.11, 0.09, 0.03, 0.025, 'x'), MAT.steel, { d: 'Groot tandwiel op de differentieelas.', p: [c[0], c[1] - 0.012, c[2]], ex: [-0.1, -0.06, 0], inner: true }),
+    P('Differentieelhuis', G.cyl('x', 0.07, 0.07, 0.1, 20), MAT.iron, { d: 'Huis van het differentieel in de reductiebak.', p: [c[0], c[1] - 0.012, c[2]], ex: [0, -0.12, 0.08], inner: true }),
     P('Olievulplug', G.cyl('y', 0.01, 0.01, 0.02, 8), MAT.steel, { d: 'Plug bovenop de bak.', p: [c[0], c[1] + 0.14, c[2]], ex: [0, 0.1, 0] }),
   ]);
 }

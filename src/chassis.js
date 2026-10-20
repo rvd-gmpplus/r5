@@ -1,8 +1,9 @@
 /* ===================== onderstel: McPherson voor, torsieas achter, 195/55 R18 ===================== */
-const CHS_TRACK = 0.64;
+// halve spoorbreedte voor en achter, wielmidden tot wielmidden (spoor 1.548 en 1.532 mm, Renault NL prijslijst)
+const CHS_TRACK_F = 0.774, CHS_TRACK_R = 0.766;
 
 function chsWheel(s, front) {
-  const p = [s * CHS_TRACK, AY, front ? AXF : AXR];
+  const p = [s * (front ? CHS_TRACK_F : CHS_TRACK_R), AY, front ? AXF : AXR];
   const name = `Wiel ${sideName(s)}${front ? 'voor' : 'achter'}`;
   return A(name, { d: 'Lichtmetalen wiel met band 195/55 R18. De bandmaat staat op het Britse gegevensblad van de 90 kW; de Techno rijdt op dezelfde maat.', ex: [s * 0.28, 0.05, 0] }, [
     P('Band', G.cyl('x', AY, AY, 0.195, 28), MAT.rubber, { d: 'Band 195/55 R18.', p, ex: [s * 0.06, 0, 0] }),
@@ -13,12 +14,12 @@ function chsWheel(s, front) {
   ]);
 }
 function chsCorner(s) {
-  const x = s * 0.62, z = AXF;
+  const x = s * (CHS_TRACK_F - 0.11), z = AXF;
   return A(`Wielophanging ${sideName(s)}voor`, {
     d: 'McPherson-veerpoot met draagarm en spoorstang.',
     ex: [s * 0.2, -0.15, 0.08],
   }, [
-    P('Draagarm', G.box(0.34, 0.03, 0.06), MAT.iron, { d: 'Onderste draagarm van de vooras.', p: [s * 0.42, 0.22, z], ex: [0, -0.1, 0] }),
+    P('Draagarm', G.box(0.42, 0.03, 0.06), MAT.iron, { d: 'Onderste draagarm van de vooras.', p: [s * 0.46, 0.22, z], ex: [0, -0.1, 0] }),
     P('Fusee', G.box(0.06, 0.12, 0.08), MAT.iron, { d: 'Fusee tussen draagarm, veerpoot en naaf.', p: [x, 0.30, z], ex: [s * 0.06, 0, 0] }),
     P('Veer', spring(0.045, 0.008, 0.28, 6, 'y'), MAT.darkSteel, { d: 'Schroefveer om de demper.', p: [s * 0.55, 0.58, z], ex: [0, 0.16, 0] }),
     P('Demper', G.cyl('y', 0.022, 0.022, 0.32, 12), MAT.steel, { d: 'Schokdemper in de veer.', p: [s * 0.55, 0.58, z], ex: [s * 0.06, 0.1, 0] }),
@@ -43,20 +44,20 @@ function buildRearAxle() {
     d: 'Torsieas met langsarmen, schroefveren en dempers. Geen aangedreven achterwielen.',
     ex: [0, -0.35, -0.25],
   }, [
-    P('Torsiebalk', G.box(1.15, 0.07, 0.08), MAT.iron, { d: 'Dwarse torsiebalk tussen de langsarmen.', p: [0, 0.24, AXR + 0.12], ex: [0, -0.12, 0] }),
+    P('Torsiebalk', G.box(1.30, 0.07, 0.08), MAT.iron, { d: 'Dwarse torsiebalk tussen de langsarmen.', p: [0, 0.24, AXR + 0.12], ex: [0, -0.12, 0] }),
     ...[1, -1].map(s => A(`Langsarm ${sideName(s)}`, { d: 'Langsarm van de achteras.', ex: [s * 0.12, -0.08, -0.08] }, [
-      P('Arm', G.box(0.06, 0.05, 0.42), MAT.iron, { d: 'Langsarm van de torsieas naar de naaf.', p: [s * 0.58, 0.26, AXR + 0.1], ex: [s * 0.06, 0, 0] }),
+      P('Arm', G.box(0.06, 0.05, 0.42), MAT.iron, { d: 'Langsarm van de torsieas naar de naaf.', p: [s * (CHS_TRACK_R - 0.12), 0.26, AXR + 0.1], ex: [s * 0.06, 0, 0] }),
       P('Veer achter', spring(0.04, 0.007, 0.24, 6, 'y'), MAT.darkSteel, { d: 'Schroefveer naast de langsarm.', p: [s * 0.48, 0.42, AXR + 0.02], ex: [0, 0.14, 0] }),
       P('Demper achter', G.cyl('y', 0.02, 0.02, 0.3, 10), MAT.steel, { d: 'Schokdemper van de achteras.', p: [s * 0.5, 0.45, AXR - 0.05], ex: [s * 0.05, 0.08, 0] }),
     ])),
   ]);
 }
 function chsCaliper(s) {
-  const p = [s * 0.66, AY, AXF + 0.12];
+  const p = [s * (CHS_TRACK_F - 0.005), AY + 0.05, AXF + 0.11];
   return A(`Remklauw ${sideName(s)}voor`, { d: 'Zwevende remklauw op een geventileerde schijf.', ex: [s * 0.08, 0.08, 0.06] }, [
-    P('Remschijf', G.cyl('x', 0.148, 0.148, 0.026, 24), MAT.iron, { d: 'Geventileerde remschijf voor. Het Britse blad van de 90 kW noemt 296 mm bij 26 mm; die maat is hier overgenomen als huis, niet als losse bevestiging voor de 110 kW.', p: [s * CHS_TRACK, AY, AXF], ex: [s * 0.05, 0, 0] }),
+    P('Remschijf', G.cyl('x', 0.148, 0.148, 0.026, 24), MAT.iron, { d: 'Geventileerde remschijf voor. Het Britse blad van de 90 kW noemt 296 mm bij 26 mm; die maat is hier overgenomen als huis, niet als losse bevestiging voor de 110 kW.', p: [s * CHS_TRACK_F, AY, AXF], ex: [s * 0.05, 0, 0] }),
     P('Remklauwhuis', G.box(0.05, 0.08, 0.12), MAT.iron, { d: 'Huis van de remklauw.', p, ex: [0, 0.06, 0] }),
-    P('Remblok', G.box(0.012, 0.05, 0.09), MAT.friction, { d: 'Remblok tegen de schijf.', p: [p[0] - s * 0.03, p[1], p[2]], ex: [s * -0.04, 0, 0], inner: true }),
+    P('Remblok', G.box(0.012, 0.05, 0.09), MAT.friction, { d: 'Remblok tegen de schijf.', p: [p[0] - s * 0.014, p[1], p[2]], ex: [s * -0.04, 0, 0], inner: true }),
   ]);
 }
 function buildBrakeSystem() {
@@ -65,7 +66,7 @@ function buildBrakeSystem() {
     ex: [0, 0.2, 0],
   }, [
     chsCaliper(1), chsCaliper(-1),
-    ...[1, -1].map(s => P(`Remtrommel ${sideName(s)}`, G.cyl('x', 0.12, 0.12, 0.06, 20), MAT.iron, { d: 'Remtrommel achter.', p: [s * CHS_TRACK, AY, AXR], ex: [s * 0.08, 0, 0] })),
+    ...[1, -1].map(s => P(`Remtrommel ${sideName(s)}`, G.cyl('x', 0.12, 0.12, 0.06, 20), MAT.iron, { d: 'Remtrommel achter.', p: [s * CHS_TRACK_R, AY, AXR], ex: [s * 0.08, 0, 0] })),
     P('Parkeerremmotor', G.rbox(0.08, 0.05, 0.06, 0.008), MAT.ecu, { d: 'Motor van de elektrische parkeerrem op de achteras.', p: [0.2, 0.3, AXR + 0.05], ex: [0.08, 0.06, 0] }),
   ]);
 }

@@ -6,7 +6,7 @@ Interactieve 3D-explosietekening van een Renault 5 E-Tech electric, modeljaar 20
 
 ## Stand
 
-Versie 1 is grof. De carrosserie bestaat uit vlakke panelen en de hoofdmaten kloppen niet: `tools/maat.py` meet 3,821 m lang en 1,418 m hoog met een spoor van 1,28 m, waar Renault 3,922 m, 1,498 m en 1,548 m opgeeft. Een herbouw in golven loopt (golf 0 tot en met 5). Golf 0 maakte de docs waar. Golf 1 zette de poorten op externe maten; die staan rood tot golf 2 de carrosserie herbouwt. Zie [docs/onderzoek/stand-v1.md](docs/onderzoek/stand-v1.md).
+Een herbouw in golven loopt (golf 0 tot en met 5). Golf 0 maakte de docs waar, golf 1 zette de poorten op externe maten en golf 2 (nog niet gepubliceerd) bouwde de carrosserie opnieuw op een geloft vlak. `tools/maat.py` meet nu 3.929 mm lang, 1.774 mm breed, 1.498 mm hoog, wielbasis 2.540 mm, spoor 1.548 en 1.532 mm en 2.016 mm over de spiegels (Renault: 3.922, 1.774, 1.498, 2.540, 1.548, 1.532 en 2.020 mm). Versie 1 had vlakke panelen, 3,821 m lengte, 1,418 m hoogte en een spoor van 1,28 m; zie [docs/onderzoek/stand-v1.md](docs/onderzoek/stand-v1.md).
 
 ## De auto
 
@@ -48,9 +48,9 @@ python3 build.py
 
 ## Tests
 
-Groen na golf 1: `python3 build.py --lint`, `python3 tools/framework.py check`, `python3 tools/smoke.py`, `python3 tools/integrity.py` (0 fouten), `python3 tools/tri.py --gate`, `python3 tools/pncheck.py` en `python3 tools/maat.py --zelftest`. Bewust rood tot golf 2: `python3 tools/silhouette.py` (silhouet uit de maattekening van de brochure, genormaliseerd op de opgegeven maten, tolerantie 30 mm) en de maatpoort `python3 tools/maat.py`.
+Groen na golf 2: `python3 build.py --lint`, `python3 tools/framework.py check`, `python3 tools/smoke.py`, `python3 tools/integrity.py` (0 fouten), `python3 tools/tri.py --gate`, `python3 tools/pncheck.py`, `python3 tools/silhouette.py` (silhouet uit de maattekening van de brochure, genormaliseerd op de opgegeven maten, tolerantie 30 mm), de maatpoort `python3 tools/maat.py`, `python3 tools/opentest.py --strikt-min` en `python3 tools/ui_inner.py --open --strict`. De rode set van versie 1 is daarmee groen.
 
-Nightly is rood en blijft rood tot `tools/itest.py` en `docs/baseline/` bestaan: de eerste stap faalt omdat `tools/itest.py` ontbreekt. Tot golf 2 eindigt `python3 tools/opentest.py` met `opentest klaar in 11 s: 23 fouten, 0 meldingen` (oude carrosserie), en faalt CI bij de stap silhouette. Zie de sectie Bekende ruis in [CLAUDE.md](CLAUDE.md).
+Nightly is rood en blijft rood tot `tools/itest.py` en `docs/baseline/` bestaan: de eerste stap faalt omdat `tools/itest.py` ontbreekt. `python3 tools/pubsmoke.py` meldt `nummergegevens in #pn onleesbaar of leeg (0)` zolang `data/pn/` leeg is. Zie de sectie Bekende ruis in [CLAUDE.md](CLAUDE.md).
 
 ## Verder lezen
 

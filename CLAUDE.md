@@ -10,7 +10,7 @@ Dit is versie 1 op het framework van laguna3. Versie 1 is grof: vlakke panelen e
 
 - `bash tools/setup.sh` maakt een verse omgeving klaar (Playwright uit `requirements.txt`, three.js 0.147.0 met hashcontrole).
 - `python3 build.py --lint` voor elke commit; `python3 build.py` herbouwt `index.html` (gecommit, hoort bij `src/`).
-- Stand na golf 1 (gemeten 20 oktober 2026): lint, `framework.py check`, rooktest, integriteit (0 fouten), `tri.py --gate`, `pncheck.py` en `python3 tools/maat.py --zelftest` zijn groen. `silhouette.py` en `tools/maat.py` zijn bewust rood tot golf 2: ze meten nu tegen externe maten en het model van versie 1 haalt die niet (onder meer 8 cm te laag). Zie Bekende ruis.
+- Stand na golf 2 (gemeten 20 oktober 2026): lint, `framework.py check`, rooktest, integriteit (0 fouten), `tri.py --gate`, `pncheck.py`, `silhouette.py` (`SILHOUET OK`), `tools/maat.py` (`MATEN OK`), `opentest.py --strikt-min` (0 fouten, 0 meldingen) en `ui_inner.py --open --strict` zijn groen. De rode set van versie 1 (silhouette, maat, opentest) is groen. Zie Bekende ruis voor wat nog rood is.
 - De volledige set `tools/orkestratie/finaltests.sh` vraagt ook itest, opentest, ui_inner, visdiff en anchorcheck, en draait als derde reeks de extra test `maat` (`extraTests` in `auto.json`). `tools/itest.py` en `docs/baseline/` bestaan nog niet; niet doen alsof die set groen is.
 - Budgetten staan in `tools/anchors.json`; `tools/tri.py --gate` bewaakt het totaal.
 - Een melding van de gebruiker eerst narekenen met `tools/orkestratie/pick.py`, `probe.py` of stralen; dan pas wijzigen.
@@ -51,10 +51,8 @@ Nog niet klaar na golf 1: een carrosserie op de externe maten (golf 2), onderdee
 Meldingen die nu geen nieuwe fout zijn:
 
 - Nightly faalt bij de stap itest met `python3: can't open file '.../tools/itest.py': [Errno 2] No such file or directory`. Dit blijft rood tot `tools/itest.py` en `docs/baseline/` bestaan. `nightly.yml` is generiek en wordt niet bewerkt (besluit van de eigenaar).
-- Bekende rode set tot golf 2 (oude carrosserie, versie 1):
-  - `python3 tools/opentest.py` eindigt met `opentest klaar in 11 s: 23 fouten, 0 meldingen`: botsing en blootleggen bij 12 van de 13 openers (alle behalve de Laadklep), onder meer `FOUT: Achterklep: blootleggen: 419 treffers op verborgen knopen`.
-  - `python3 tools/silhouette.py` eindigt met `SILHOUET NIET OK` (top 13, plan 3 en raam 6 stations buiten tolerantie, neus te breed). Daardoor faalt ook de stap silhouette in CI.
-  - `python3 tools/maat.py` eindigt met `MATEN NIET OK` (lengte, hoogte, spoor, overhang, breedte met spiegels, band binnen de huid). In `finaltests.sh` is dat de derde reeks: `framework.py extra maat`, uitvoer `maat.txt`.
+- `python3 tools/pubsmoke.py` eindigt met `PUBLICATIEROOKTEST NIET OK:` en per beeld `nummergegevens in #pn onleesbaar of leeg (0)`. Oorzaak: `data/pn/` heeft nog geen onderdeelnummers (versie 1 heeft er geen). Elke andere pubsmoke-regel moet schoon zijn. Een regel `GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels` is een melding van Chromium op de GPU van macOS, geen fout van de pagina.
+- De rode set van versie 1 (opentest 23 fouten, `SILHOUET NIET OK`, `MATEN NIET OK`) is sinds golf 2 groen. Rood daar is weer een echte fout.
 
 ## Werkwijze
 

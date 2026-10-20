@@ -1,22 +1,31 @@
 /* ===================== carrosserie: Renault 5 E-Tech electric, MY26 ===================== */
 // Autoframe: x links, y omhoog vanaf de grond, z naar voren. Maten in meter.
 // Lengte 3.922 mm, wielbasis 2.540 mm, overhang voor 749 mm en achter 633 mm (Renault).
-// Halve breedte: 904 mm dekt de 1.808 mm met ingeklapte spiegels; spiegels tot 1.010 mm (2.020 mm uitgeklapt).
+// Eén geloft vlak (golf 2): de onderbak is per z een doorsnede van bodem, flank, schouder en dek (bodSec), de kas daarboven
+// een doorsnede van gordel, zijruit, dakrand en dak (bodGh). Panelen zijn stukken van die vlakken (bodPatch), zodat de naden
+// spleten zijn en geen losse dozen. De steunpunten komen uit data/silhouet.json (brochure, genormaliseerd).
 const ZF = 1.961, ZR = -1.961;
-const AXF = 1.212, AXR = -1.328, AY = 0.336;
-const BOD_WMAX = 0.904, BOD_MIRW = 1.010, BOD_H = 1.498;
-const BOD_ARCH_R = 0.42, BOD_ARCH_RY = 0.38;
+const AXF = 1.212, AXR = -1.328, AY = 0.336;          // wielmidden: straal 195/55 R18 (0,336 m)
+// framework: halve breedte zonder en met spiegels, hoogte (integrity.py leest ze). 0,909 is de bovengrens van de maatpoort (1.818 mm).
+const BOD_WMAX = 0.909, BOD_MIRW = 1.010, BOD_H = 1.498;
+const bodARCH = 0.395;                                   // wielkastuitsparing, straal om de wielas
+const bodFLW = 0.085, bodFLT = 0.022;                  // wielkastrand: breedte van de flens en dikte buiten de huid
+const bodWS0 = 1.0, bodWS1 = 0.12, bodRW0 = -1.22, bodSP = -1.665; // voorruitvoet, voorruitkop, dakeinde (spoilerlip), onderrand achterruit
 
 MAT.paint.color.setHex(0xF4C400);
 MAT.paint.roughness = 0.18;
 MAT.paint.metalness = 0.55;
 MAT.paint.clearcoat = 1;
 MAT.paint.clearcoatRoughness = 0.08;
-std('bodRoof', 0x14161a, 0.35, 0.28);
-phys('bodGlass', { color: 0x163040, metalness: 0.05, roughness: 0.04, transparent: true, opacity: 0.45, depthWrite: false, envMapIntensity: 1.1 });
+std('bodRoof', 0x111216, 0.35, 0.26);
+phys('bodGlass', { color: 0x081016, metalness: 0.05, roughness: 0.04, transparent: true, opacity: 0.8, depthWrite: false, envMapIntensity: 1.1 });   // donker getint, zoals op de foto's
 std('bodLamp', 0x121418, 0.45, 0.32);
 phys('bodDRL', { color: 0xf4fbff, emissive: 0xd7f1ff, emissiveIntensity: 2.4, roughness: 0.18, metalness: 0 });
 std('bodSocket', 0x1c1e22, 0.3, 0.45);
+std('bodGrain', 0x18191c, 0, 0.86, { envMapIntensity: 0.25 });   // zwart generfd kunststof: wielkastranden, dorpels, onderbumpers
+std('bodPillar', 0x08090a, 0.2, 0.3, { envMapIntensity: 0.5 });  // glanzend zwart van stijlen en raamkaders
+std('bodTrimIn', 0x2a2c30, 0, 0.8);                               // binnenbekleding van portieren en klep
+std('bodArchIn', 0x141518, 0, 0.92, { envMapIntensity: 0.2 });   // zwart kunststof van wielkasten en binnenschermen
 
 function bodPchip(pts) {
   const n = pts.length, xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), h = [], dl = [], m = new Array(n);
@@ -34,296 +43,174 @@ function bodPchip(pts) {
     return (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h[i] * m[i] + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h[i] * m[i + 1];
   };
 }
-// Bovenaanzicht: brede, bijna rechte flank, stompe neus en staart. De koplampen zitten in de neushoeken.
-const HW = bodPchip([[-1.961, 0.22], [-1.90, 0.64], [-1.72, 0.84], [-1.30, 0.872], [-0.2, 0.878], [0.85, 0.878], [1.38, 0.86], [1.62, 0.82], [1.80, 0.76], [1.90, 0.52], [1.961, 0.18]]);
-const YB = bodPchip([[-1.961, 0.38], [-1.82, 0.22], [-1.40, 0.15], [-0.2, 0.125], [1.15, 0.125], [1.55, 0.15], [1.78, 0.20], [1.90, 0.30], [1.961, 0.42]]);
-const YT = bodPchip([[-1.961, 0.72], [-1.78, 1.04], [-1.22, 1.08], [0.20, 1.05], [0.85, 1.02], [1.15, 0.94], [1.45, 0.84], [1.68, 0.76], [1.86, 0.64], [1.961, 0.50]]);
-const YR = bodPchip([[-1.18, 1.20], [-0.80, 1.42], [-0.20, 1.49], [0.28, 1.498], [0.55, 1.36], [0.78, 1.14], [1.00, 0.98]]);
-function bodHoodY(z) { const t = clamp((z - 0.98) / 0.981, 0, 1); return 0.98 - 0.32 * t * t; }
-function bodTailY(z) { const t = clamp((-1.15 - z) / 0.811, 0, 1); return 1.24 - 0.55 * Math.pow(t, 1.2); }
-function bodTop(z) { if (z >= 1.02) return bodHoodY(z); if (z <= -1.15) return bodTailY(z); return YR(z); }
-function bodWinTop(z) { return Math.min(bodTop(z) - 0.04, YT(z) + 0.40); }
+const bodSstep = t => { const u = clamp(t, 0, 1); return u * u * (3 - 2 * u); };
+// halve breedte van de flank zonder wielkastranden. Met de rand erbij (bodFLT) volgt het bovenaanzicht van de brochure:
+// 0,885 over de voorwielkast, 0,864 langs de portieren, 0,887 over de achterwielkast; stompe neus en staart.
+const HW = bodPchip([[-1.961, 0.66], [-1.955, 0.71], [-1.935, 0.755], [-1.90, 0.788], [-1.85, 0.803], [-1.70, 0.812], [-1.50, 0.853], [-1.30, 0.864], [-1.10, 0.857],
+  [-0.80, 0.852], [-0.40, 0.860], [0.20, 0.864], [0.80, 0.864], [1.00, 0.864], [1.25, 0.862], [1.50, 0.845], [1.70, 0.784], [1.80, 0.762], [1.88, 0.735], [1.935, 0.68], [1.961, 0.58]]);
+// onderrand van de carrosserie (dorpel op 216 tot 230 mm, bumpers hoger)
+const YB = bodPchip([[-1.961, 0.37], [-1.90, 0.335], [-1.85, 0.32], [-1.75, 0.279], [-1.40, 0.24], [-0.80, 0.226], [-0.40, 0.223], [0.20, 0.219],
+  [0.60, 0.216], [1.40, 0.232], [1.75, 0.242], [1.85, 0.254], [1.92, 0.27], [1.961, 0.30]]);
+// schouder = gordellijn (onderrand zijruiten, brochure 1,053 tot 1,079) en voor de voorruit de naad van kap en scherm
+const YT = bodPchip([[-1.961, 0.86], [-1.92, 0.93], [-1.86, 0.985], [-1.78, 1.03], [-1.665, 1.058], [-1.40, 1.074], [-1.10, 1.077], [-0.90, 1.075],
+  [-0.70, 1.070], [-0.50, 1.063], [-0.10, 1.056], [0.10, 1.052], [0.30, 1.049], [0.60, 1.043], [0.80, 1.030], [1.00, 1.000], [1.30, 0.952],
+  [1.60, 0.900], [1.75, 0.870], [1.85, 0.848], [1.92, 0.815], [1.961, 0.75]]);
+// hartlijn van het dek: motorkap (brochure z 1,0 tot 1,7) en achterklep onder de achterruit; in de kas niet zichtbaar
+const YD = bodPchip([[-1.961, 0.80], [-1.935, 0.90], [-1.90, 0.965], [-1.84, 1.02], [-1.76, 1.052], [-1.70, 1.068], [-1.665, 1.078],
+  [-1.60, 1.08], [0.90, 1.07], [1.00, 1.086], [1.20, 1.058], [1.40, 1.022], [1.60, 0.984], [1.70, 0.945], [1.78, 0.922], [1.85, 0.898], [1.90, 0.874], [1.935, 0.84], [1.961, 0.78]]);
+// exponent van het dekprofiel: vlak midden en afgeronde randen; op de kap vlakker, met een strakke rand naar de schermen
+const bodDP = bodPchip([[-1.961, 2.4], [-1.70, 2.8], [0.90, 3.6], [1.20, 4.4], [1.80, 4.2], [1.961, 3.2]]);
+// straal van de schouder: klein (strak) op kap en achterheupen, ruimer langs de portieren
+const bodRS = bodPchip([[-1.961, 0.05], [-1.55, 0.042], [-1.00, 0.055], [-0.60, 0.075], [0.60, 0.075], [1.05, 0.052], [1.961, 0.045]]);
+// daklijn op de hartlijn: voorruit (brochure 1,083 tot 1,470), vlak hoog dak (1,498), achterruit (1,239 en 1,158)
+const YR = bodPchip([[bodSP, 1.078], [-1.60, 1.158], [-1.50, 1.239], [-1.40, 1.318], [-1.30, 1.392], [bodRW0, 1.452], [-1.10, 1.474], [-0.80, 1.492],
+  [-0.40, 1.498], [0.00, 1.493], [bodWS1, 1.486], [0.20, 1.472], [0.40, 1.401], [0.60, 1.294], [0.80, 1.182], [bodWS0, 1.086]]);
+function bodHoodY(z) { return YD(z); }   // contract: hoogte van de motorkap op de hartlijn (integrity.py: 2,5 cm onder de buitenhuid)
+
+const bodS1 = 0.12, bodS2 = 0.20, bodS3 = 0.62, bodS4 = 0.74, bodBUL = 0.012, bodCRW = 0.022;
+// doorsnede van de onderbak op z
+function bodSec(z) {
+  const hw = HW(z), yb = YB(z), yt = YT(z), d = yt - yb, bul = Math.min(bodBUL * (1 - 0.65 * Math.exp(-Math.pow((z - AXR) / 0.4, 2))), hw * 0.15);   // achterheup: minder bolling, breder op de schouder
+  const rb = Math.min(0.06, d * 0.28, (hw - bul) * 0.45), rs = Math.min(bodRS(z), d * 0.3, (hw - bul) * 0.45);
+  const yd = Math.max(yt + 0.004, YD(z)), c = yd - yt, p = bodDP(z);
+  const cx = hw - bul - rs;                       // middelpunt van de schouderboog
+  let xe = cx + rs * 0.3, th = 1.2;
+  for (let i = 0; i < 3; i++) { th = Math.atan2(xe, c * p); xe = cx + rs * Math.cos(th); }
+  // achter z -1,0 (C-stijl en klep) stopt de schouderboog op de hoek van de kas, zodat flank en stijl zonder richel in elkaar
+  // overlopen; onder de achterruit wordt die hoek de zijrand van de klep
+  const wP = bodSstep((-1.0 - z) / 0.1);
+  if (wP > 0) { th = lerp(th, Math.atan(bodTUMB), wP); xe = cx + rs * Math.cos(th); }
+  const cy = yt - rs * Math.sin(th);
+  return { hw, yb, yt, rb, rs, yd, c, p, cx, cy, th, xe, bul };
+}
+// halve doorsnede, s van 0 (bodem op de hartlijn) via bodem, flank en schouder naar 1 (dek op de hartlijn)
+function bodHalf(z, s, c) {
+  const { hw, yb, yt, rb, rs, cx, cy, th, xe, c: cr, p, bul } = c;
+  if (s <= bodS1) return [s / bodS1 * (hw - bul - rb), yb];
+  if (s <= bodS2) { const a = -HALF + (s - bodS1) / (bodS2 - bodS1) * HALF; return [hw - bul - rb + rb * Math.cos(a), yb + rb + rb * Math.sin(a)]; }
+  if (s <= bodS3) { const t = (s - bodS2) / (bodS3 - bodS2), y = yb + rb + t * (cy - yb - rb); return [hw + bul * Math.sin(PI * t) - bul, y]; }
+  if (s <= bodS4) { const a = (s - bodS3) / (bodS4 - bodS3) * th; return [cx + rs * Math.cos(a), cy + rs * Math.sin(a)]; }
+  const t = (s - bodS4) / (1 - bodS4); return [xe * (1 - t), yt + cr * (1 - Math.pow(1 - t, p))];
+}
+function bodHalfPt(z, s) { return bodHalf(z, s, bodSec(z)); }
+// parameter s bij hoogte y (flank, schouder en dek)
+function bodSAtY(z, y) {
+  const c = bodSec(z), y0 = c.yb + c.rb, y1 = c.cy;
+  if (y <= y0) { const a = Math.asin(clamp((y - y0) / c.rb, -1, 0)); return bodS1 + (a + HALF) / HALF * (bodS2 - bodS1); }
+  if (y <= y1) return bodS2 + (y - y0) / Math.max(1e-6, y1 - y0) * (bodS3 - bodS2);
+  if (y <= c.yt) { const a = Math.asin(clamp((y - c.cy) / c.rs, 0, 1)); return bodS3 + Math.min(1, a / c.th) * (bodS4 - bodS3); }
+  const u = clamp((y - c.yt) / Math.max(1e-6, c.c), 0, 1), t = 1 - Math.pow(1 - u, 1 / c.p);
+  return bodS4 + t * (1 - bodS4);
+}
+// parameter s op het dek bij |x|
+function bodSAtX(z, x) { const c = bodSec(z); return bodS4 + (1 - bodS4) * clamp(1 - Math.abs(x) / c.xe, 0, 1); }
+// halve breedte van de onderbak op hoogte y (0 boven het dek)
+function bodRingX(z, y) { const c = bodSec(z); if (y > c.yd) return 0; return Math.max(0, bodHalf(z, bodSAtY(z, y), c)[0]); }
+// onderrand van de flank in de wielkast: s van de boog r = bodARCH om de as
+function bodArchS(z) {
+  for (const az of [AXF, AXR]) { const dz = z - az; if (Math.abs(dz) <= bodARCH) return bodSAtY(z, AY + Math.sqrt(bodARCH * bodARCH - dz * dz)); }
+  return 0;
+}
+const bodARCH_BREAKS = [AXF - bodARCH, AXF - bodARCH + 0.004, AXF + bodARCH - 0.004, AXF + bodARCH, AXR - bodARCH, AXR - bodARCH + 0.004, AXR + bodARCH - 0.004, AXR + bodARCH];
+// bovenrand van de wielkastrand (r = bodARCH + bodFLW) op z, of 0 buiten de rand
+function bodFlareTop(z) {
+  for (const az of [AXF, AXR]) { const dz = z - az, R = bodARCH + bodFLW; if (Math.abs(dz) < R) return AY + Math.sqrt(R * R - dz * dz); }
+  return 0;
+}
+/* ---------- kas (ruiten, stijlen, dak) ---------- */
+// halve kas: q = 0 gordel, bodQG bovenrand zijruit, bodQS begin dakrand, bodQR begin dak (of voorruit, achterruit), 1 hartlijn
+const bodQS = 0.54, bodQR = 0.72, bodQG = 0.50, bodTUMB = 0.40;
+function bodGh(z) {
+  const yb = YT(z), xb = bodSec(z).xe, yc = Math.max(yb + 0.002, YR(z)), h = yc - yb;
+  // achter het dakeinde wordt de dakrand ruimer, zodat de C-stijl rond in de achterruit overloopt in plaats van te knikken
+  const rw = bodSstep((bodRW0 + 0.04 - z) / 0.3), cr = Math.min(bodCRW, h * 0.3), yre = yc - cr, rr = Math.min(lerp(0.06, 0.12, rw), (yre - yb) * lerp(0.3, 0.5, rw)), ye = yre - rr;
+  const xe = xb - bodTUMB * (ye - yb), xr = xe - rr * 0.8;
+  return { yb, xb, yc, cr, yre, rr, ye, xe, xr };
+}
+function bodGhHalf(z, q, g) {
+  g = g || bodGh(z);
+  if (q <= bodQS) { const t = q / bodQS; return [g.xb + (g.xe - g.xb) * t + 0.008 * Math.sin(PI * t) * Math.min(1, (g.ye - g.yb) / 0.2), g.yb + (g.ye - g.yb) * t]; }
+  if (q <= bodQR) { const a = (q - bodQS) / (bodQR - bodQS) * HALF; return [g.xr + (g.xe - g.xr) * Math.cos(a), g.ye + (g.yre - g.ye) * Math.sin(a)]; }
+  const t = (q - bodQR) / (1 - bodQR), x = g.xr * (1 - t); return [x, g.yre + g.cr * t * (2 - t)];
+}
+// parameter q (halve kas) op hoogte y langs de zijruit
+function bodQAtY(z, y) { const g = bodGh(z); return clamp((y - g.yb) / Math.max(1e-6, g.ye - g.yb), 0, 1) * bodQS; }
+/* ---------- buitenhuid voor andere onderdelen ---------- */
 function surfX(z, y) {
-  const hw = HW(z), yb = YB(z), yt = YT(z), yr = Math.max(yt + 0.08, bodTop(z));
-  if (y <= yb) return hw * 0.90;
-  if (y < yt) {
-    const t = clamp((y - yb) / Math.max(1e-4, yt - yb), 0, 1);
-    return hw * (0.965 + 0.035 * Math.sin(t * PI));
-  }
-  const t = clamp((y - yt) / Math.max(1e-4, yr - yt), 0, 1);
-  const k = t * t * (3 - 2 * t);
-  // Kap en klep blijven breed; het dak knijpt naar de middennaad.
-  const crown = z >= 1.00 ? 0.05 : (z <= -1.12 ? 0.22 : 0.12);
-  const side = z >= 1.00 ? 0.94 : 0.90;
-  return hw * (side * (1 - k) + crown * k);
+  const yt = YT(z);
+  if (y <= yt || z < bodSP || z > bodWS0) return bodRingX(z, Math.min(y, bodSec(z).yd));
+  const g = bodGh(z);
+  if (y <= g.ye) return bodGhHalf(z, bodQAtY(z, y), g)[0];
+  if (y <= g.yre) { const a = Math.asin(clamp((y - g.ye) / Math.max(1e-6, g.yre - g.ye), 0, 1)); return g.xr + (g.xe - g.xr) * Math.cos(a); }
+  if (y >= g.yc) return 0;
+  const u = clamp((y - g.yre) / g.cr, 0, 1), t = 1 - Math.sqrt(1 - u); return g.xr * (1 - t);
 }
-function bodInArch(z, y) {
-  if (y > 0.70) return false;
-  for (const zc of [AXF, AXR]) {
-    const dz = (z - zc) / BOD_ARCH_R, dy = (y - AY) / BOD_ARCH_RY;
-    if (dz * dz + dy * dy < 1) return true;
-  }
-  return false;
-}
-function bodDoorZone(z) {
-  if (z >= 0.18 && z <= 0.98) return 'voor';
-  if (z >= -0.95 && z <= 0.14) return 'achter';
-  return '';
-}
-function bodInDoor(z, x, y) {
-  if (!bodDoorZone(z) || bodInArch(z, y)) return false;
-  if (Math.abs(x) < 0.22) return false;
-  return y > 0.28 && y < bodWinTop(z);
-}
-function bodInHood(z, x, y) {
-  if (z < 1.04 || z > 1.72 || y < bodHoodY(z) - 0.07) return false;
-  return Math.abs(x) < Math.min(0.74, HW(z) * 0.80);
-}
-function bodInFlap(z, x, y) { return bodInHood(z, x, y) && x > 0.08 && x < 0.44 && z > 1.22 && z < 1.55; }
-function bodIsRoof(z, y) { return z < 0.46 && z > -1.12 && y > YT(z) + 0.02; }
-function bodXYZ(z, s) {
-  const left = s <= 1, u = left ? s : 2 - s;
-  const yb = YB(z), yr = Math.max(yb + 0.08, bodTop(z));
-  const y = yb + (yr - yb) * Math.pow(Math.max(u, 0), 0.42);
-  return [(left ? 1 : -1) * surfX(z, y), y];
-}
-function bodSelectGeo(keep, push) {
-  const nz = 96, ns = 40, pos = [], idx = [], map = new Map();
-  const at = (i, j) => {
-    const k = i + ':' + j;
-    if (map.has(k)) return map.get(k);
-    const z = ZR + (ZF - ZR) * i / nz, s = 2 * j / ns, [x0, y] = bodXYZ(z, s);
-    const x = x0 + (x0 >= 0 ? 1 : -1) * (push || 0);
-    const id = pos.length / 3;
-    pos.push(x, y + (push && bodIsRoof(z, y) ? 0 : 0), z);
-    map.set(k, id);
-    return id;
+/* ---------- vlakken bouwen ---------- */
+// raster over u (met extra kolommen op breaks) en per u een v-bereik vr(u); fn(u, v) geeft het punt
+function bodPatch(fn, u0, u1, nu, vr, nv, breaks = []) {
+  const us = [];
+  for (let i = 0; i <= nu; i++) us.push(u0 + (u1 - u0) * i / nu);
+  breaks.forEach(b => { if (b > u0 + 1e-4 && b < u1 - 1e-4) us.push(b); });
+  us.sort((a, b) => a - b);
+  // kolommen die (binnen 1e-6) samenvallen, één keer; driehoeken zonder oppervlak (kolom die tot een punt krimpt) vallen weg
+  for (let i = us.length - 1; i > 0; i--) if (us[i] - us[i - 1] < 1e-6) us.splice(i, 1);
+  const pos = [], idx = [], rows = nv + 1;
+  for (const u of us) { const [v0, v1] = vr(u); for (let j = 0; j <= nv; j++) { const p = fn(u, v0 + (v1 - v0) * j / nv); pos.push(p[0], p[1], p[2]); } }
+  const tri = (a, b, c) => {
+    const ax = pos[3 * b] - pos[3 * a], ay = pos[3 * b + 1] - pos[3 * a + 1], az = pos[3 * b + 2] - pos[3 * a + 2];
+    const bx = pos[3 * c] - pos[3 * a], by = pos[3 * c + 1] - pos[3 * a + 1], bz = pos[3 * c + 2] - pos[3 * a + 2];
+    const cx = ay * bz - az * by, cy = az * bx - ax * bz, cz = ax * by - ay * bx;
+    if (cx * cx + cy * cy + cz * cz > 1e-16) idx.push(a, b, c);
   };
-  for (let i = 0; i < nz; i++) for (let j = 0; j < ns; j++) {
-    const z = ZR + (ZF - ZR) * (i + 0.5) / nz, s = 2 * (j + 0.5) / ns, [x, y] = bodXYZ(z, s);
-    if (!keep(z, x, y)) continue;
-    const a = at(i, j), b = at(i + 1, j), c = at(i + 1, j + 1), d = at(i, j + 1);
-    idx.push(a, d, b, b, d, c);
+  for (let i = 0; i < us.length - 1; i++) for (let j = 0; j < nv; j++) {
+    const a = i * rows + j, b = (i + 1) * rows + j, c = b + 1, d = a + 1;
+    tri(a, b, d); tri(b, c, d);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
+  g.setIndex(idx); g.computeVertexNormals();
   return g;
 }
-const bodShellKeep = (z, x, y) => !bodInArch(z, y) && !bodInDoor(z, x, y) && !bodInHood(z, x, y) && !bodIsRoof(z, y);
-const bodRoofKeep = (z, x, y) => bodIsRoof(z, y) && !bodInDoor(z, x, y) && !bodInHood(z, x, y);
+// naar buiten wijzende normaal van de onderbak (linkerhelft) in (z, s)
+function bodN(z, s) {
+  const e = 1e-3, a = bodHalfPt(z, Math.max(0, s - e)), b = bodHalfPt(z, Math.min(1, s + e)), f = bodHalfPt(z + e, s), k = bodHalfPt(z - e, s);
+  const ds = [b[0] - a[0], b[1] - a[1], 0], dz = [f[0] - k[0], f[1] - k[1], 2 * e];
+  const n = [ds[1] * dz[2] - ds[2] * dz[1], ds[2] * dz[0] - ds[0] * dz[2], ds[0] * dz[1] - ds[1] * dz[0]], l = Math.hypot(...n) || 1;
+  return [n[0] / l, n[1] / l, n[2] / l];
+}
+// punt van de onderbak, p van 0 tot 2 over beide helften (1 = dek op de hartlijn), met verschuiving langs de normaal (in > 0 = naar binnen)
+function bodLow(z, p, inw = 0) {
+  const q = ((p % 2) + 2) % 2, sd = q <= 1 ? 1 : -1, s = q <= 1 ? q : 2 - q, [x, y] = bodHalfPt(z, s);
+  if (!inw) return [sd * x, y, z];
+  const n = bodN(z, s); return [sd * (x - n[0] * inw), y - n[1] * inw, z - n[2] * inw];
+}
+// punt op de buitenhuid op (z, y), met afstand out langs de normaal naar buiten
+function bodAt(z, y, out = 0) { const sv = bodSAtY(z, y), [x, yy] = bodHalfPt(z, sv), n = bodN(z, sv); return [x + n[0] * out, yy + n[1] * out, z + n[2] * out]; }
+const bodSideR = (s, a, b) => (s > 0 ? [a, b] : [2 - b, 2 - a]);
+// paneel op de onderbak aan zijde s; vr(z) geeft [s0, s1] van de linkerhelft; off = verschuiving naar binnen
+function bodLowSide(s, z0, z1, nu, vr, nv, breaks, off) {
+  return bodPatch((z, p) => bodLow(z, p, off || 0), z0, z1, nu, z => bodSideR(s, ...vr(z)), nv, breaks);
+}
+// dekpaneel over beide helften: sLo(z) geeft de s-ondergrens; het paneel loopt over de hartlijn
+function bodDeck(z0, z1, nu, sLo, nv, breaks, off) {
+  return bodPatch((z, p) => bodLow(z, p, off || 0), z0, z1, nu, z => { const a = sLo(z); return [a, 2 - a]; }, nv, breaks);
+}
+// kaspaneel aan zijde s met q-bereik per z (linkerhelft, q in [0,1]); out = verschuiving naar buiten
+function bodGhSide(s, z0, z1, nu, vr, nv, breaks, out = 0) {
+  return bodPatch((z, q) => { const [x, y] = bodGhHalf(z, q); const o = out * (q <= bodQS ? 1 : 0.7); return [s * (x + o), y + (q > bodQS ? out * 0.7 : 0), z]; }, z0, z1, nu, vr, nv, breaks);
+}
+// kaspaneel over de hartlijn (dak, voorruit, achterruit): q van qLo(z) links tot 2 - qLo(z) rechts
+function bodGhTop(z0, z1, nu, qLo, nv, breaks, out = 0) {
+  return bodPatch((z, w) => { const sd = w <= 1 ? 1 : -1, q = w <= 1 ? w : 2 - w, [x, y] = bodGhHalf(z, q); return [sd * x, y + out, z]; }, z0, z1, nu, z => { const a = qLo(z); return [a, 2 - a]; }, nv, breaks);
+}
+// sluitvlak op een uiterste z (neus, staart): van de onderrand tot het dek, over de breedte van de doorsnede
+function bodCap(z, y0, y1, ny = 8, nx = 16) {
+  const c = bodSec(z), a = Math.max(c.yb + 1e-4, y0 === undefined ? -1 : y0), b = Math.min(c.yd - 1e-4, y1 === undefined ? 9 : y1);
+  return bodPatch((y, t) => { const X = bodRingX(z, y); return [X * t, y, z]; }, a, b, ny, () => [-1, 1], nx);
+}
 
 function bodHinge(pivot, axis, angle, extra) { return hinge(pivot, axis, angle, Object.assign({ min: Math.abs(angle) * 0.82 }, extra)); }
 function bodSlide(move, extra) {
   const len = Math.hypot(move[0], move[1], move[2]);
   return Object.assign({ type: 'slide', move, min: len * 0.82 }, extra);
-}
-
-// Vlak paneel in het x-z-vlak. yFn(z, x) geeft de hoogte. Een gat valt op de rasterlijnen, dus de rand blijft recht.
-function bodSlab(z0, z1, x0, x1, yFn, nz, nx, hole) {
-  const pos = [], idx = [], id = [];
-  for (let i = 0; i <= nz; i++) {
-    id[i] = [];
-    const z = z0 + (z1 - z0) * i / nz;
-    for (let j = 0; j <= nx; j++) {
-      const x = x0 + (x1 - x0) * j / nx;
-      id[i][j] = pos.length / 3;
-      pos.push(x, yFn(z, x), z);
-    }
-  }
-  const cut = (z, x) => hole && z > hole.z0 && z < hole.z1 && x > hole.x0 && x < hole.x1;
-  for (let i = 0; i < nz; i++) for (let j = 0; j < nx; j++) {
-    const z = z0 + (z1 - z0) * (i + 0.5) / nz, x = x0 + (x1 - x0) * (j + 0.5) / nx;
-    if (cut(z, x)) continue;
-    const a = id[i][j], b = id[i][j + 1], c = id[i + 1][j + 1], d = id[i + 1][j];
-    idx.push(a, b, d, b, c, d);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-function bodQuad(a, b, c, d) {
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute([...a, ...b, ...c, ...a, ...c, ...d], 3));
-  g.computeVertexNormals();
-  return g;
-}
-function bodHoodYAt(z, x) {
-  const t = clamp((z - 1.06) / 0.62, 0, 1);
-  const crown = 0.012 * (1 - Math.pow(clamp(x / 0.70, -1, 1), 2));
-  return 0.98 - 0.20 * t + crown;
-}
-// Flank als één vlak met ronde wielkasten en rechthoekige deuropeningen. Geen rastergaten.
-function bodSideGeo(s) {
-  const R = 0.405, yRock = 0.22;
-  const aLow = Math.asin((yRock - AY) / R);
-  const aRear = Math.PI - aLow, aFront = aLow;
-  const sh = new THREE.Shape();
-  sh.moveTo(1.84, yRock);
-  sh.lineTo(1.86, 0.46);
-  sh.lineTo(1.72, 0.82);
-  sh.lineTo(1.28, 0.96);
-  sh.lineTo(0.95, 1.02);
-  sh.lineTo(-0.15, 1.04);
-  sh.lineTo(-1.08, 1.05);
-  sh.lineTo(-1.42, 0.96);
-  sh.lineTo(-1.70, 0.76);
-  sh.lineTo(-1.84, 0.46);
-  sh.lineTo(-1.84, yRock);
-  const notch = zc => {
-    const n = 28;
-    for (let i = 0; i <= n; i++) {
-      const a = aRear + (aFront - aRear) * i / n;
-      sh.lineTo(zc + R * Math.cos(a), AY + R * Math.sin(a));
-    }
-  };
-  sh.lineTo(AXR + R * Math.cos(aRear), yRock);
-  notch(AXR);
-  sh.lineTo(AXF + R * Math.cos(aRear), yRock);
-  notch(AXF);
-  sh.closePath();
-  const rect = (z0, z1, y0, y1) => {
-    const p = new THREE.Path();
-    p.moveTo(z0, y0); p.lineTo(z0, y1); p.lineTo(z1, y1); p.lineTo(z1, y0); p.closePath();
-    sh.holes.push(p);
-  };
-  rect(0.18, 0.70, 0.36, 0.72);
-  rect(-0.78, 0.04, 0.36, 0.72);
-  const g = new THREE.ExtrudeGeometry(sh, { depth: 0.026, bevelEnabled: false, steps: 1, curveSegments: 8 });
-  g.rotateY(-Math.PI / 2);
-  g.translate(0.845, 0, 0);
-  if (s < 0) g.scale(-1, 1, 1);
-  g.computeVertexNormals();
-  return g;
-}
-
-function bodLamp(s) {
-  const p = [s * 0.58, 0.64, 1.86];
-  return A(`Koplamp ${sideName(s)}`, { d: 'Koplamp in een bijna vierkant huis op de neushoek, met een lichtgevende rechthoek als dagrijlicht. De binnenoptiek is schematisch.', ex: [s * 0.14, 0.04, 0.16] }, [
-    P('Huis', G.rbox(0.30, 0.24, 0.12, 0.02), MAT.bodLamp, { d: 'Zwart huis van de koplamp, vast in de neushoek.', p, ex: [s * 0.04, 0, 0.03] }),
-    P('Dagrijlicht', G.rbox(0.22, 0.15, 0.012, 0.01), MAT.bodDRL, { d: 'Lichtgevende rechthoek in het midden van de koplamp, het herkenningspunt van de neus.', p: [p[0], p[1] + 0.01, p[2] + 0.06], ex: [0, 0, 0.08] }),
-    P('Lichtgeleider', G.box(0.24, 0.17, 0.006), MAT.lensClear, { d: 'Doorzichtige kap over het dagrijlicht.', p: [p[0], p[1] + 0.01, p[2] + 0.068], ex: [0, 0, 0.05] }),
-    P('Knipperlicht', G.box(0.18, 0.025, 0.008), MAT.amber, { d: 'Oranje strook onder het dagrijlicht.', p: [p[0], p[1] - 0.09, p[2] + 0.06], ex: [0, -0.04, 0.04] }),
-  ]);
-}
-function bodTailLamp(s) {
-  const p = [s * 0.70, 0.86, -1.78];
-  return A(`Achterlicht ${sideName(s)}`, { d: 'Staand achterlicht op de hoek van de achterklep, met een rode lens. De grafiek van het licht is vereenvoudigd.', ex: [s * 0.12, 0.04, -0.12] }, [
-    P('Huis achterlicht', G.rbox(0.09, 0.42, 0.08, 0.012), MAT.bodLamp, { d: 'Zwart huis van het achterlicht.', p, ex: [s * 0.03, 0, 0] }),
-    P('Lens', G.rbox(0.055, 0.34, 0.016, 0.008), MAT.lensRed, { d: 'Rode lens van het achterlicht.', p: [p[0], p[1], p[2] - 0.04], ex: [0, 0, -0.06] }),
-  ]);
-}
-function bodMirror(s) {
-  const z = 0.82, y = 1.05, x = s * 0.78;
-  return A(s > 0 ? 'Buitenspiegel links' : 'Buitenspiegel rechts', {
-    d: 'Buitenspiegel op een smalle voet. Inklappen draait de kap naar achteren langs het portier.',
-    ex: [s * 0.18, 0.08, 0],
-    open: bodHinge([x, y, z], [0, 1, 0], s > 0 ? 1.15 : -1.15, { label: s > 0 ? 'Spiegel links' : 'Spiegel rechts', look: { dir: [s, 0.35, 0.8], nodes: [s > 0 ? 'Buitenspiegel links' : 'Buitenspiegel rechts'] } }),
-  }, [
-    P('Spiegelvoet', G.box(0.04, 0.05, 0.07), MAT.blackGloss, { d: 'Smalle voet van de spiegel op het voorportier.', p: [x, y, z], ex: [0, 0.04, 0] }),
-    P('Spiegelkap', G.rbox(0.14, 0.09, 0.18, 0.016), MAT.blackGloss, { d: 'Zwarte spiegelkap.', p: [s * 0.90, y + 0.01, z - 0.01], ex: [s * 0.06, 0.03, 0] }),
-    P('Spiegelglas', G.box(0.09, 0.06, 0.006), MAT.lensClear, { d: 'Spiegelglas in de kap.', p: [s * 0.90, y + 0.01, z + 0.07], ex: [0, 0, 0.04] }),
-  ]);
-}
-function bodDoor(s, front) {
-  const name = `Portier ${sideName(s)}${front ? 'voor' : 'achter'}`;
-  const glass = `Zijruit ${sideName(s)}${front ? 'voor' : 'achter'}`;
-  const x = s * 0.872;
-  const skin = front
-    ? { z0: 0.20, z1: 0.68, y0: 0.38, y1: 0.70 }
-    : { z0: -0.76, z1: 0.02, y0: 0.38, y1: 0.70 };
-  const win = front
-    ? { z0: 0.16, z1: 0.94, y0: 0.78, y1: 1.30 }
-    : { z0: -1.02, z1: 0.05, y0: 0.80, y1: 1.28 };
-  const zH = front ? 0.96 : 0.06;
-  const ang = (s > 0 ? -1 : 1) * (front ? 1.15 : 1.05);
-  const boxOf = (r, thick) => G.box(thick, r.y1 - r.y0, r.z1 - r.z0);
-  const mid = r => [(r.z0 + r.z1) / 2, (r.y0 + r.y1) / 2];
-  const [sz, sy] = mid(skin), [wz, wy] = mid(win);
-  const kids = [
-    P('Buitenhuid', boxOf(skin, 0.02), MAT.paint, { d: 'Buitenhuid van het portier, in dezelfde lak als de rest van de carrosserie.', p: [x, sy, sz], ex: [s * 0.06, 0, 0] }),
-    P('Binnenplaat', G.box(0.016, 0.48, front ? 0.55 : 0.62), MAT.plasticGrey, { d: 'Binnenplaat van het portier met de raamsponning.', p: [s * 0.80, 0.62, front ? 0.48 : -0.36], ex: [s * -0.05, 0, 0], inner: true }),
-    P(glass, boxOf(win, 0.012), MAT.bodGlass, { d: 'Zijruit. Bij openen zakt het glas in het portier.', p: [x, wy, wz], ex: [s * 0.03, 0.08, 0], open: bodSlide([0, -0.36, 0], { label: glass }) }),
-    P(front ? 'Portiergreep' : 'Verborgen greep', front ? G.box(0.02, 0.028, 0.14) : G.box(0.016, 0.022, 0.08), MAT.blackGloss, {
-      d: front ? 'Uitschuifbare greep in de buitenhuid.' : 'Greep die in de zwarte stijl achter het glas schuilgaat, zoals bij de productiewagen.',
-      p: [s * 0.888, front ? 0.62 : 0.90, front ? 0.42 : -0.92],
-      ex: [s * 0.06, 0.03, 0],
-    }),
-  ];
-  if (front) kids.push(bodMirror(s));
-  return A(name, {
-    d: front ? 'Voorportier met zijruit, greep en buitenspiegel. Het scharnier zit aan de A-stijl.' : 'Achterportier met zijruit. De greep zit verborgen in de C-stijl, zodat de flank als één vlak leest.',
-    ex: [s * 0.42, 0.04, 0],
-    open: bodHinge([s * 0.84, 0.85, zH], [0, 1, 0], ang, { label: name, look: { dir: [s * 1.1, 0.35, front ? 0.55 : -0.15], nodes: [name] } }),
-  }, kids);
-}
-
-function buildBody() {
-  const flap = { z0: 1.30, z1: 1.52, x0: 0.08, x1: 0.40 };
-  const hood = bodSlab(1.08, 1.70, -0.70, 0.70, bodHoodYAt, 16, 18, flap);
-  const roof = bodSlab(-1.08, 0.46, -0.60, 0.60, (z, x) => 1.40 + 0.018 * (1 - Math.pow(x / 0.62, 2)), 18, 10);
-  const screen = bodQuad([0.64, 0.98, 1.04], [-0.64, 0.98, 1.04], [-0.52, 1.36, 0.50], [0.52, 1.36, 0.50]);
-  const hatchY = z => 1.16 + (z + 1.12) * (0.58 - 1.16) / (-1.78 + 1.12);
-  const hatch = bodSlab(-1.78, -1.12, -0.70, 0.70, z => hatchY(z), 12, 10);
-  const motorkap = A('Motorkap', {
-    d: 'Motorkap met de laadklep links op de kap, op de plek van de luchtinlaat van de oorspronkelijke Renault 5. De klep gaat open zonder de kap te lichten; de kap zelf gaat om het scharnier bij de voorruit omhoog.',
-    ex: [0, 0.28, 0.12],
-    open: bodHinge([0, bodHoodYAt(1.08, 0), 1.08], [1, 0, 0], -1.05, { label: 'Motorkap', look: { dir: [0.35, 0.9, 1.15], nodes: ['Motorkap'] } }),
-  }, [
-    P('Kapblad', hood, MAT.paint, { d: 'Buitenblad van de motorkap.', ex: [0, 0.06, 0] }),
-    P('Isolatie kap', G.box(0.9, 0.01, 0.42), MAT.fabric, { d: 'Dempende mat aan de binnenkant van de kap.', p: [0, bodHoodYAt(1.40, 0) - 0.06, 1.38], ex: [0, -0.06, 0], inner: true }),
-    A('Laadklep', {
-      d: 'Klep links op de motorkap. Erachter zit de CCS-aansluiting. De klep kantelt om de achterrand omhoog.',
-      ex: [0.16, 0.1, 0],
-      open: bodHinge([0.24, bodHoodYAt(1.30, 0.24), 1.30], [1, 0, 0], -1.15, { label: 'Laadklep', look: { dir: [0.7, 0.6, 1], nodes: ['Laadklep'] } }),
-    }, [
-      P('Klepblad', G.rbox(0.30, 0.016, 0.20, 0.004), MAT.paint, { d: 'Buitenblad van de laadklep, in de lak van de kap.', p: [0.24, bodHoodYAt(1.41, 0.24) + 0.012, 1.41], ex: [0, 0.05, 0] }),
-      P('Kleprand', G.box(0.28, 0.01, 0.18), MAT.blackGloss, { d: 'Zwarte rand onder het klepblad.', p: [0.24, bodHoodYAt(1.41, 0.24) - 0.02, 1.41], ex: [0, -0.03, 0] }),
-    ]),
-  ]);
-  const klep = A('Achterklep', {
-    d: 'Achterklep van de hatchback, scharnierend aan de bovenrand. De achterruit zit in de klep.',
-    ex: [0, 0.22, -0.16],
-    open: bodHinge([0, 1.16, -1.12], [1, 0, 0], 1.1, { label: 'Achterklep', look: { dir: [0.4, 0.4, -1.15], nodes: ['Achterklep'] } }),
-  }, [
-    P('Klepblad achter', hatch, MAT.paint, { d: 'Buitenblad van de achterklep.', ex: [0, 0.05, -0.05] }),
-    P('Achterruit', bodQuad([0.58, 1.02, -1.28], [-0.58, 1.02, -1.28], [-0.62, 0.78, -1.58], [0.62, 0.78, -1.58]), MAT.bodGlass, { d: 'Achterruit in de klep.', ex: [0, 0.04, -0.05] }),
-    P('Ruitenwisser achter', merge([G.box(0.018, 0.012, 0.26), xf(G.box(0.035, 0.025, 0.035), [0, 0, 0.13])]), MAT.blackGloss, { d: 'Ruitenwisser onderaan de achterruit.', p: [0.06, 0.78, -1.62], ex: [0.08, 0, -0.04] }),
-    P('Kenteken achter', G.box(0.44, 0.10, 0.008), MAT.plateYellow, { d: 'Gele kentekenplaat, zoals in Nederland. Het kenteken zelf staat er niet op.', p: [0, 0.48, -1.86], ex: [0, -0.06, -0.04] }),
-  ]);
-  const flank = merge([bodSideGeo(1), bodSideGeo(-1)]);
-  return A('Carrosserie', {
-    d: 'Carrosserie van de Renault 5 E-Tech electric: vijfdeurs hatchback met korte neus, vierkante koplampen, zwarte dakrand en de laadklep op de motorkap. Pop-geel met zwart dak, modeljaar 2026.',
-    ex: [0, 1.4, 0],
-  }, [
-    P('Onderbak', flank, MAT.paint, { d: 'Buitenhuid van de flanken, met ronde wielkasten en de openingen van de portieren.', ex: [0, -0.12, 0] }),
-    P('Dak', roof, MAT.bodRoof, { d: 'Zwarte dakplaat van de voorruit tot de achterruit.', ex: [0, 0.22, 0] }),
-    P('Dakrand links', G.box(0.12, 0.04, 1.48), MAT.bodRoof, { d: 'Zwarte rand langs het dak, over de zijruit heen.', p: [0.68, 1.33, -0.30], ex: [0.06, 0.08, 0] }),
-    P('Dakrand rechts', G.box(0.12, 0.04, 1.48), MAT.bodRoof, { d: 'Zwarte rand langs het dak aan de andere kant.', p: [-0.68, 1.33, -0.30], ex: [-0.06, 0.08, 0] }),
-    P('Stijlen', merge([
-      xf(G.box(0.055, 0.55, 0.07), [0.78, 1.12, 0.78]),
-      xf(G.box(0.055, 0.55, 0.07), [-0.78, 1.12, 0.78]),
-      xf(G.box(0.07, 0.48, 0.10), [0.76, 1.08, -1.18]),
-      xf(G.box(0.07, 0.48, 0.10), [-0.76, 1.08, -1.18]),
-    ]), MAT.bodRoof, { d: 'Zwarte A-stijl en C-stijl, links en rechts.', ex: [0, 0.1, 0] }),
-    P('Middenstijl', G.box(0.05, 0.58, 0.07), MAT.bodRoof, { d: 'Zwarte B-stijl tussen de zijruiten.', p: [0.80, 1.05, 0.10], ex: [0.08, 0.06, 0] }),
-    P('Middenstijl rechts', G.box(0.05, 0.58, 0.07), MAT.bodRoof, { d: 'Zwarte B-stijl aan de andere kant.', p: [-0.80, 1.05, 0.10], ex: [-0.08, 0.06, 0] }),
-    P('Voorruit', screen, MAT.bodGlass, { d: 'Voorruit. Het glas is donker getint, de stijlen eromheen zijn zwart.', ex: [0, 0.12, 0.08] }),
-    P('Schutbord', G.box(1.35, 0.04, 0.22), MAT.paint, { d: 'Plaat tussen de motorkap en de voorruit.', p: [0, 0.99, 1.02], ex: [0, 0.06, 0.06] }),
-    motorkap,
-    bodDoor(1, true), bodDoor(-1, true), bodDoor(1, false), bodDoor(-1, false),
-    klep,
-    bodLamp(1), bodLamp(-1), bodTailLamp(1), bodTailLamp(-1),
-    P('Neus', G.rbox(1.55, 0.58, 0.08, 0.02), MAT.paint, { d: 'Vlakke neus tussen de schermen. Er is geen grille.', p: [0, 0.58, 1.82], ex: [0, 0, 0.1] }),
-    P('Neusvlak', G.box(0.62, 0.16, 0.02), MAT.plastic, { d: 'Zwart vlak tussen de koplampen. De neus heeft geen beeldmerk.', p: [0, 0.66, 1.87], ex: [0, 0, 0.06] }),
-    P('Onderinlaat', G.box(0.85, 0.12, 0.04), MAT.plastic, { d: 'Zwarte luchtinlaat in de voorbumper.', p: [0, 0.36, 1.86], ex: [0, -0.04, 0.06] }),
-    P('Onderlip voor', G.box(1.48, 0.06, 0.08), MAT.plastic, { d: 'Zwarte onderlip van de voorbumper.', p: [0, 0.20, 1.84], ex: [0, -0.08, 0.08] }),
-    P('Dorpel links', G.box(0.04, 0.07, 1.35), MAT.plastic, { d: 'Zwarte dorpelbekleding tussen de wielkasten.', p: [0.86, 0.20, -0.05], ex: [0.08, -0.06, 0] }),
-    P('Dorpel rechts', G.box(0.04, 0.07, 1.35), MAT.plastic, { d: 'Zwarte dorpelbekleding aan de andere kant.', p: [-0.86, 0.20, -0.05], ex: [-0.08, -0.06, 0] }),
-    P('Diffusor', G.box(1.40, 0.07, 0.10), MAT.plastic, { d: 'Zwarte onderlip achter. Er is geen uitlaatpijp.', p: [0, 0.20, -1.84], ex: [0, -0.08, -0.08] }),
-    P('Kenteken voor', G.box(0.44, 0.10, 0.008), MAT.plateYellow, { d: 'Gele kentekenplaat voor. Het kenteken zelf staat er niet op.', p: [0, 0.30, 1.90], ex: [0, -0.05, 0.06] }),
-  ]);
 }
